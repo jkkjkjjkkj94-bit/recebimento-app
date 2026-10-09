@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recebimento de Mercadorias - Fluent UI</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        fluent: {
+                            blue: '#0078d4',
+                            blueHover: '#106ebe',
+                            bgDark: '#202020',
+                            cardDark: '#2c2c2c',
+                            cardBorderDark: '#383838',
+                            textDark: '#ffffff',
+                            textSecondaryDark: '#adadad',
+                            bgLight: '#f3f3f3',
+                            cardLight: '#ffffff',
+                            cardBorderLight: '#e5e5e5',
+                            textLight: '#1b1b1b',
+                            textSecondaryLight: '#616161',
+                            accent: '#005a9e'
+                        }
+                    },
+                    fontFamily: {
+                        segoe: ['"Segoe UI"', 'system-ui', '-apple-system', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+            user-select: none;
+        }
+
+        /* Windows 11 Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(120, 120, 120, 0.3);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(120, 120, 120, 0.5);
+        }
+
+        .mica-card {
+            backdrop-filter: blur(20px);
+            transition: all 0.2s cubic-bezier(0.1, 0.9, 0.2, 1);
+        }
+
+        .nav-item.active {
+            position: relative;
+        }
+        .nav-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 15%;
+            height: 70%;
+            width: 3px;
+            background-color: #0078d4;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body class="bg-fluent-bgLight dark:bg-fluent-bgDark text-fluent-textLight dark:text-fluent-textDark font-segoe h-screen overflow-hidden flex flex-col transition-colors duration-200">
+
+    <!-- Windows 11 TitleBar Simulation -->
+    <header class="h-10 bg-fluent-cardLight dark:bg-[#181818] border-b border-fluent-cardBorderLight dark:border-fluent-cardBorderDark flex items-center justify-between px-4 select-none shrink-0 text-xs">
+        <div class="flex items-center gap-3">
+            <i class="fa-solid font-bold text-fluent-blue text-sm">📦</i>
+            <span class="font-semibold tracking-wide">Recebimento de Mercadorias <span class="text-[10px] bg-fluent-blue/20 text-fluent-blue px-2 py-0.5 rounded-full ml-1 font-mono">v2.5 Fluent</span></span>
+        </div>
+        
+        <div class="flex items-center gap-4">
+            <!-- Database Status Indicator -->
+            <div id="dbStatusIndicator" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-medium">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span id="dbStatusText">IndexedDB Ativo</span>
+            </div>
+
+            <!-- Theme Toggle -->
+            <button id="themeToggleBtn" onclick="toggleTheme()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-neutral-800 text-gray-600 dark:text-gray-300 transition" title="Alternar Tema (Claro/Escuro)">
+                <i class="fa-solid fa-moon dark:hidden"></i>
+                <i class="fa-solid fa-sun hidden dark:inline"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Application Container -->
+    <div class="flex flex-1 overflow-hidden">
+
+        <!-- Fluent Sidebar -->
+        <aside class="w-64 bg-fluent-cardLight/80 dark:bg-[#1f1f1f]/80 border-r border-fluent-cardBorderLight dark:border-fluent-cardBorderDark flex flex-col justify-between shrink-0 mica-card">
+            <nav class="p-2 space-y-1">
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-item active w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium hover:bg-gray-200/60 dark:hover:bg-neutral-800/60 transition text-left">
+                    <i class="fa-solid fa-chart-pie w-5 text-center text-fluent-blue"></i>
+                    <span>Dashboard</span>
+                </button>
+
+                <button onclick="switchTab('import')" id="nav-import" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium hover:bg-gray-200/60 dark:hover:bg-neutral-800/60 transition text-left">
+                    <i class="fa-solid fa-file-code w-5 text-center text-purple-500"></i>
+                    <span>Importar NF-e (XML)</span>
+                </button>
+
+                <button onclick="switchTab('conference')" id="nav-conference" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium hover:bg-gray-200/60 dark:hover:bg-neutral-800/60 transition text-left">
+                    <i class="fa-solid fa-barcode w-5 text-center text-emerald-500"></i>
+                    <span>Conferência / Bipagem</span>
+                </button>
+
+                <button onclick="switchTab('history')" id="nav-history" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium hover:bg-gray-200/60 dark:hover:bg-neutral-800/60 transition text-left">
+                    <i class="fa-solid fa-boxes-packing w-5 text-center text-amber-500"></i>
+                    <span>Histórico & Relatórios</span>
+                </button>
+
+                <button onclick="switchTab('settings')" id="nav-settings" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium hover:bg-gray-200/60 dark:hover:bg-neutral-800/60 transition text-left">
+                    <i class="fa-solid fa-sliders w-5 text-center text-gray-400"></i>
+                    <span>Configurações</span>
+                </button>
+            </nav>
+
+            <!-- Bottom Quick Shortcuts Help -->
+            <div class="p-3 m-2 rounded-lg bg-gray-100 dark:bg-neutral-800/50 border border-fluent-cardBorderLight dark:border-fluent-cardBorderDark text-xs space-y-1">
+                <div class="font-semibold text-fluent-textSecondaryLight dark:text-fluent-textSecondaryDark mb-1">Atalhos de Teclado</div>
+                <div class="flex justify-between"><span>Nova NF-e</span> <kbd class="px-1.5 py-0.5 rounded bg-gray-200 dark:bg-neutral-700 font-mono">F2</kbd></div>
+                <div class="flex justify-between"><span>Focar Bipador</span> <kbd class="px-1.5 py-0.5 rounded bg-gray-200 dark:bg-neutral-700 font-mono">F4</kbd></div>
+            </div>
+        </aside>
+
+        <!-- Content Area -->
+        <main class="flex-1 overflow-y-auto p-6 bg-fluent-bgLight dark:bg-[#202020]">
+            
+            <!-- VIEW: DASHBOARD -->
+            <section id="view-dashboard" class="space-y-6">
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight">Painel de Operações</h1>
+                    <p class="text-sm text-fluent-textSecondaryLight dark:text-fluent-textSecondaryDark">Visão geral das mercadorias recebidas e conferências do dia.</p>
+                </div>
+
+                <!-- KPI Cards Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="p-4 rounded-xl bg-fluent-cardLight dark:bg-fluent-cardDark border border-fluent-cardBorderLight dark:border-fluent-cardBorderDark shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold text-fluent-textSecondaryLight dark:text-fluent-textSecondaryDark uppercase tracking-wider">Notas Registradas</p>
+                            <h3 id="dashTotalNotas" class="text-3xl font-bold mt-1">0</h3>
+                        </div>
+                        <div class="w-12 h-12 rounded-lg bg-blue-500/10 text-fluent-blue flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-file-invoice"></i>
+                        </div>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-fluent-cardLight dark:bg-fluent-cardDark border border-fluent-cardBorderLight dark:border-fluent-cardBorderDark shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold text-fluent-textSecondaryLight dark:text-fluent-textSecondaryDark uppercase tracking-wider">Concluídas sem Erro</p>
+                            <h3 id="dashConcluidas" class="text-3xl font-bold mt-1 text-emerald-500">0</h3>
+                        </div>
+                        <div class="w-12 h-12 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-circle-check"></i>
+                        </div>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-fluent-cardLight dark:bg-fluent-cardDark border border-fluent-cardBorderLight dark:border-fluent-cardBorderDark shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold text-fluent-textSecondaryLight dark:text-fluent-textSecondaryDark uppercase tracking-wider">Com Divergência</p>
+                            <h3 id="dashDivergentes" class="text-3xl font-bold mt-1 text-amber-500">0</h3>
+                        </div>
+                        <div class="w-12 h-12 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                        </div>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-fluent-cardLight dark:bg-fluent-cardDark border border-fluent-cardBorderLight dark:border-fluent-cardBorderDark shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold text-fluent-textSecondaryLight dark:text-fluent-textSecondaryDark uppercase tracking-wider">Total Itens Bipados</p>
+                            <h3 id="dashTotalBipados" class="text-3xl font-bold mt-1 text-purple-500">0</h3>
+                        </div>
+                        <div class="w-12 h-12 rounded-lg bg-purple-500/10 text-purple-500 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-barcode"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity & Quick Action -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 p-5 rounded-xl bg-fluent-cardLight dark:bg-fluent-cardDark border border-fluent-cardBorderLight dark:border-fluent-cardBorderDark shadow-sm space-y-4">
+                        <div class="flex justify-between items-center">
+                            <h2 class="font-bold text-base flex items-center gap-2"><i class="fa-solid fa-clock-rotate-left text-fluent-blue"></i> Útimas Notas Importadas</h2>
+                            <button onclick="switchTab('history')" class="text-xs text-fluent-blue hover:underline font-semibold">Ver Histórico Completo</button>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm text-left">
+                                <thead class="text-xs text-fluent-textSecondaryLight dark:text-fluent-textSecondaryDark border-b border-fluent-cardBorderLight dark:border-fluent-cardBorderDark uppercase">
+                                    <tr>
+                                        <th class="pb-2">NF-e</th>
+                                        <th class="pb-2">Fornecedor</th>
+                                        <th class="pb-2">Data</th>
+                                        <th class="pb-2">Status</th>
+                                        <th class="pb-2 text-right">Ação</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dashTableBody" class="divide-y divide-fluent-cardBorderLight dark:divide-fluent-cardBorderDark">
+                                    <!-- Dynamic content -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="p-5 rounded-xl bg-fluent-cardLight dark:bg-fluent-cardDark border border-fluent-cardBorderLight dark:border-fluent-cardBorderDark shadow-sm flex flex-col justify-between space-y-4">
+                        <div>
+                            <h2 class="font-bold text-base mb-2 flex items-center gap-2"><i class="fa-solid fa-bolt text-amber-500"></i> Ações Rápidas</h2>
+                            <p class="text-xs text-fluent-textSecondaryLight dark:text-fluent-textSecondaryDark mb-4">Inicie o fluxo de recebimento ou realize buscas de notas fiscais salvas no banco de dados local.</p>
+                            
+                            <div class="space-y-2">
+                                <button onclick="switchTab('import')" class="w-full py-2.5 px-4 rounded-md bg-fluent-blue hover:bg-fluent-blueHover text-white font-medium text-sm flex items-center justify-center gap-2 shadow transition">
+                                    <i class="fa-solid fa-file-import"></i> Importar Nova NF-e
+                                </button>
+                                <button onclick="carregarExemploRapido()" class="w-full py-2.5 px-4 rounded-md bg-gray-200 dark:bg-neutral-800 hover:bg-gray-300 dark:hover:bg-neutral-700 font-medium text-sm flex items-center justify-center gap-2 transition">
+                                    <i class="fa-solid fa-vial"></i> Carregar Exemplo de Teste
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="p-3 rounded-md bg-fluent-blue/10 border border-fluent-blue/20 text-xs space-y-1">
+                            <p class="font-semibold text-fluent-blue"><i class="fa-solid fa-shield-halved"></i> Armazenamento Local Nativo</p>
+                            <p class="text-fluent-textSecondaryLight dark:text-fluent-textSecondaryDark">Seus dados ficam armazenados exclusivamente neste computador via IndexedDB.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: IMPORT XML -->
+            <section id="view-import" class="space-y-6 hidden">
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight">Importação de NF-e (XML)</h1>
+                    <p class="text-sm text-fluent-textSecondaryLight dark:text-fluent-textSecondaryDark">Carregue arquivos XML de Notas Fiscais Eletrônicas para preparar o lote de conferência.</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- File Upload Area -->
+                    <div class="p-6 rounded-xl bg-fluent-cardLight dark:bg-fluent-cardDark border border-fluent-cardBorderLight dark:border-fluent-cardBorderDark shadow-sm space-y-4">
+                        <h2 class="font-bold text-base flex items-center gap-2"><i class="fa-solid fa-upload text-fluent-blue"></i> Upload do Arquivo XML</h2>
+                        
+                        <div id="dropZone" onclick="document.getElementById('fileXmlInput').click()" class="border-2 border-dashed border-gray-300 dark:border-neutral-700 hover:border-fluent-blue dark:hover:border-fluent-blue rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer transition bg-gray-50 dark:bg-neutral-900/50">
+                            <i class="fa-solid fa-cloud-arrow-up text-4xl text-fluent-blue mb-3"></i>
+                            <p class="font-medium text-sm text-center">Clique aqui ou arraste o arquivo XML da NF-e</p>
+                            <p class="text-xs text-fluent-textSecondaryLight dark:text-fluent-textSecondaryDark mt-1">Formatos suportados: .xml (Padrão SEFAZ)</p>
+                            <input type="file" id="fileXmlInput" accept=".xml" class="hidden" onchange="processarArquivoXML(event)">
+                        </div>
+
+                        <div class="flex items-center gap-2 my-2">
+                            <div class="flex-1 h-px bg-fluent-cardBorderLight dark:bg-fluent-cardBorderDark"></div>
+                            <span class="text-xs text-fluent-textSecondaryLight dark:text-fluent-textSecondaryDark font-semibold uppercase">ou teste rapidamente</span>
+                            <div class="flex-1 h-px bg-fluent-cardBorderLight dark:bg-fluent-cardBorderDark"></div>
+                        </div>
+
+                        <button onclick="carregarExemploRapido()" class="w-full py-2.5 rounded-md bg-purple-600 hover:bg-purple-700 text-white font-medium text-sm flex items-center justify-center gap-2 transition">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> Carregar NF-e Exemplo Completa
+                        </button>
+                    </div>
+
+                    <!-- Paste Raw XML Area -->
+                    <div class="p-6 rounded-xl bg-fluent-cardLight dark:bg-fluent-cardDark border border-fluent-cardBorderLight dark:border-fluent-cardBorderDark shadow-sm space-y-4 flex flex-col justify-between">
+                        <div>
+                            <h2 class="font-bold text-base mb-2 flex items-center gap-2"><i class="fa-solid fa-code text-purple-500"></i> Colar Conteúdo XML Directamente</h2>
+                            <textarea id="rawXmlText" rows="7" placeholder="Cole o código fonte XML da NF-e aqui..." class="w-full p-3 rounded-md bg-gray-50 dark:bg-neutral-900 border border-fluent-cardBorderLight dark:border-fluent-cardBorderDark text-xs font-mono focus:outline-none focus:border-fluent-blue"></textarea>
+                        </div>
+
+                        <button onclick="processarTextoXML()" class="w-full py-2.5 rounded-md bg-fluent-blue hover:bg-fluent-blueHover text-white font-medium text-sm flex items-center justify-center gap-2 transition">
+                            <i class="fa-solid fa-gears"></i> Processar Texto XML
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Preview of Imported XML -->
+                <div id="xmlPreviewCard" class="hidden p-6 rounded-xl bg-fluent-cardLight dark:bg-fluent-cardDark border border-fluent-cardBorderLight dark:border-fluent-cardBorderDark shadow-sm space-y-4">
+                    <div class="flex justify-between items-start border-b border-fluent-cardBorderLight dark:border-fluent-cardBorderDark pb-4">
+                        <div>
+                            <span class="text-xs font-bold text-fluent-blue uppercase tracking-wider">Preview da Nota Importada</span>
+                            <h3 id="prevNumeroNfe" class="text-xl font-bold">NF-e nº 000.000</h3>
+                            <p id="prevEmitente" class="text-sm text-fluent-textSecondaryLight dark:text-fluent-textSecondaryDark">Emitente: -</p>
+                            <p id="prevChave" class="text-xs font-mono text-gray-500 mt-1">Chave: -</p>
+                        </div>
+                        <button onclick="salvarEIniciarConferencia()" class="py-2.5 px-6 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm flex items-center gap-2 shadow transition">
+                            <i class="fa-solid fa-circle-play"></i> Confirmar & Iniciar Bipagem
+                        </button>
+                    </div>
+
+                    <div>
+                        <h4 class="font-semibold text-sm mb-3">Itens Encontrados no XML (<span id="prevTotalItens">0</span>)</h4>
+                        <div class="overflow-x-auto max-h-60 overflow-y-auto">
+                            <table class="w-full text-xs text-left">
+                                <thead class="bg-gray-100 dark:bg-neutral-800 text-fluent-textSecondaryLight dark:text-fluent-textSecondaryDark uppercase sticky top-0">
+                                    <tr>
+                                        <th class="p-2">Item</th>
+                                        <th class="p-2">Código EAN / GTIN</th>
+                                        <th class="p-2">Descrição do Produto</th>
+                                        <th class="p-2 text-center">Unid.</th>
+                                        <th class="p-2 text-right">Qtd Esperada</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="prevItensTableBody" class="divide-y divide-fluent-cardBorderLight dark:divide-fluent-cardBorderDark">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: CONFERENCE / BIPAGEM -->
+            <section id="view-conference" class="space-y-6 hidden">
+                <!-- Header Status & Select active NFe -->
+                <div class="flex flex-col md:flex-row justify-between md:items-center gap-4 p-4 rounded-xl bg-fluent-cardLight dark:bg-fluent-cardDark border border-fluent-cardBorderLight dark:border-fluent-cardBorderDark shadow-sm">
+                    <div>
+                        <span class="text-xs font-bold text-fluent-blue uppercase tracking-wider">Módulo de Conferência Ativa</span>
+                        <div class="flex items-center gap-2 mt-0.5">
+                            <select id="selectNotaConferencia" onchange="carregarNotaParaConferencia(this.value)" class="bg-gray-100 dark:bg-neutral-800 border border-fluent-cardBorderLight dark:border-fluent-cardBorderDark font-bold text-lg rounded-md px-3 py-1 focus:outline-none focus:border-fluent-blue">
+                                <option value="">Selecione uma Nota Fiscal...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <button onclick="finalizarConferencia()" class="py-2 px-4 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold flex items-center gap-2 transition">
+                            <i class="fa-solid fa-flag-checkered"></i> Concluir Conferência
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Main Scanner & Counter Controls -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    
+                    <!-- Scanner Input Box -->
+                    <div class="lg:col-span-2 space-y-4">
+                        <div class="p-6 rounded-xl bg-fluent-cardLight dark:bg-fluent-cardDark border-2 border-fluent-blue shadow-lg space-y-4">
+                            <div class="flex justify-between items-center">
+                                <label for="barcodeInput" class="font-bold text-sm flex items-center gap-2 text-fluent-blue">
+                                    <i class="fa-solid fa-barcode text-lg"></i> LEITOR DE CÓDIGO DE BARRAS (EAN/GTIN)
+                                </label>
+                                <span class="text-xs px-2 py-0.5 rounded bg-blue-500/10 text-fluent-blue font-mono">Frequência Alta [Pressionar Enter]</span>
+                            </div>
+
+                            <div class="relative">
+                                <input type="text" id="barcodeInput" placeholder="Aguardando bipagem... [F3 / F4 para focar]" autocomplete="off" class="w-full text-2xl font-mono p-4 rounded-lg bg-gray-50 dark:bg-neutral-900 border-2 border-gray-300 dark:border-neutral-700 focus:border-fluent-blue focus:outline-none tracking-widest text-center uppercase font-bold">
+                                <div class="absolute right-3 top-3.5 text-gray-400 text-xl">
+                                    <i class="fa-solid fa-magnifying-glass font-bold"></i>
+                                </div>
+                            </div>
+
+                            <div id="scanFeedback" class="text-center font-bold text-sm h-6 transition-all opacity-0">
+                                <!-- Feedback text -->
+                            </div>
+                        </div>
+
+                        <!-- Table of Items Conference -->
+                        <div class="p-5 rounded-xl bg-fluent-cardLight dark:bg-fluent-cardDark border border-fluent-cardBorderLight dark:border-fluent-cardBorderDark shadow-sm space-y-3">
+                            <h3 class="font-bold text-sm flex items-center justify-between">
+                                <span>Lista de Itens da Nota</span>
+                                <span class="text-xs font-normal text-fluent-textSecondaryLight dark:text-fluent-textSecondaryDark">Status em Tempo Real</span>
+                            </h3>
+
+                            <div class="overflow-x-auto max-h-80 overflow-y-auto">
+                                <table class="w-full text-xs text-left">
+                                    <thead class="bg-gray-100 dark:bg-neutral-800 text-fluent-textSecondaryLight dark:text-fluent-textSecondaryDark uppercase sticky top-0">
+                                        <tr>
+                                            <th class="p-2.5">Código EAN</th>
+                                            <th class="p-2.5">Descrição</th>
+                                            <th class="p-2.5 text-center">Esperado</th>
+                                            <th class="p-2.5 text-center">Conferido</th>
+                                            <th class="p-2.5 text-center">Avarias</th>
+                                            <th class="p-2.5 text-center">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="confItensTableBody" class="divide-y divide-fluent-cardBorderLight dark:divide-fluent-cardBorderDark font-mono">
+                                        <!-- Dynamic conference rows -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Side Stats & Anomalies Panel -->
+                    <div class="space-y-4">
+                        <!-- Progress Card -->
+                        <div class="p-5 rounded-xl bg-fluent-cardLight dark:bg-fluent-cardDark border border-fluent-cardBorderLight dark:border-fluent-cardBorderDark shadow-sm space-y-4">
+                            <h3 class="font-bold text-sm border-b border-fluent-cardBorderLight dark:border-fluent-cardBorderDark pb-2">Progresso do Lote</h3>
+                            
+                            <div>
+                                <div class="flex justify-between text-xs font-semibold mb-1">
+                                    <span>Total Conferido</span>
+                                    <span id="percentText">0%</span>
+                                </div>
+                                <div class="w-full h-3 bg-gray-200 dark:bg-neutral-800 rounded-full overflow-hidden">
+                                    <div id="progressBar" class="h-full bg-fluent-blue transition-all duration-300 w-0"></div>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3 text-center pt-2">
+                                <div class="p-2.5 rounded-lg bg-gray-100 dark:bg-neutral-800">
+                                    <span class="text-[10px] uppercase text-fluent-textSecondaryLight dark:text-fluent-textSecondaryDark font-semibold block">Qtd Total Esperada</span>
+                                    <span id="statQtdEsperada" class="text-xl font-bold">0</span>
+                                </div>
+                                <div class="p-2.5 rounded-lg bg-emerald-500/10 text-emerald-500">
+                                    <span class="text-[10px] uppercase font-semibold block">Qtd Conferida</span>
+                                    <span id="statQtdConferida" class="text-xl font-bold">0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Manual Adjustment / Damage Logging -->
+                        <div class="p-5 rounded-xl bg-fluent-cardLight dark:bg-fluent-cardDark border border-fluent-cardBorderLight dark:border-fluent-cardBorderDark shadow-sm space-y-3">
+                            <h3 class="font-bold text-sm flex items-center gap-2"><i class="fa-solid fa-triangle-exclamation text-amber-500"></i> Registrar Avaria / Exceção</h3>
+                            
+                            <div class="space-y-2 text-xs">
+                                <div>
+                                    <label class="block text-fluent-textSecondaryLight dark:text-fluent-textSecondaryDark mb-1">Selecione o Produto</label>
+                                    <select id="selectAvariaEan" class="w-full p-2 rounded bg-gray-100 dark:bg-neutral-800 border border-fluent-cardBorderLight dark:border-fluent-cardBorderDark focus:outline-none">
+                                        <!-- Options -->
+                                    </select>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label class="block text-fluent-textSecondaryLight dark:text-fluent-textSecondaryDark mb-1">Qtd Avariada</label>
+                                        <input type="number" id="inputQtdAvaria" value="1" min="1" class="w-full p-2 rounded bg-gray-100 dark:bg-neutral-800 border border-fluent-cardBorderLight dark:border-fluent-cardBorderDark">
+                                    </div>
+                                    <div>
+                                        <label class="block text-fluent-textSecondaryLight dark:text-fluent-textSecondaryDark mb-1">Motivo/Obs</label>
+                                        <input type="text" id="inputObsAvaria" placeholder="Embalagem rasgada" class="w-full p-2 rounded bg-gray-100 dark:bg-neutral-800 border border-fluent-cardBorderLight dark:border-fluent-cardBorderDark">
+                                    </div>
+                                </div>
+
+                                <button onclick="salvarAvariaManual()" class="w-full py-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded transition mt-2">
+                                    Registrar Avaria
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- VIEW: HISTORY & REPORTS -->
+            <section id="view-history" class="space-y-6 hidden">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-2xl font-bold tracking-tight">Histórico de Recebimentos</h1>
+                        <p class="text-sm text-fluent-textSecondaryLight dark:text-fluent-textSecondaryDark">Consulte todas as notas fiscais conferidas e exporte dados.</p>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <button onclick="exportarBackupJSON()" class="py-2 px-3 rounded-md bg-gray-200 dark:bg-neutral-800 hover:bg-gray-300 dark:hover:bg-neutral-700 text-xs font-semibold flex items-center gap-2 transition">
+                            <i class="fa-solid fa-download"></i> Backup (JSON)
+                        </button>
+                        <button onclick="exportarRelatorioCSV()" class="py-2 px-3 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-2 transition">
+                            <i class="fa-solid fa-file-excel"></i> Exportar CSV
+                        </button>
+                    </div>
+                </div>
+
+                <div class="p-5 rounded-xl bg-fluent-cardLight dark:bg-fluent-cardDark border border-fluent-cardBorderLight dark:border-fluent-cardBorderDark shadow-sm space-y-4">
+                    <div class="flex flex-col sm:flex-row gap-3 justify-between">
+                        <input type="text" id="searchHistInput" oninput="filtrarHistorico()" placeholder="Buscar por número da NF-e, fornecedor ou chave..." class="p-2 rounded-md bg-gray-100 dark:bg-neutral-800 border border-fluent-cardBorderLight dark:border-fluent-cardBorderDark text-xs w-full sm:w-80">
+                        
+                        <select id="filterStatusHist" onchange="filtrarHistorico()" class="p-2 rounded-md bg-gray-100 dark:bg-neutral-800 border border-fluent-cardBorderLight dark:border-fluent-cardBorderDark text-xs">
+                            <option value="TODOS">Todos os Status</option>
+                            <option value="PENDENTE">Pendente</option>
+                            <option value="CONCLUIDO">Concluído</option>
+                            <option value="DIVERGENTE">Com Divergência</option>
+                        </select>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs text-left">
+                            <thead class="bg-gray-100 dark:bg-neutral-800 text-fluent-textSecondaryLight dark:text-fluent-textSecondaryDark uppercase">
+                                <tr>
+                                    <th class="p-3">Chave / Número</th>
+                                    <th class="p-3">Fornecedor</th>
+                                    <th class="p-3">Emissão</th>
+                                    <th class="p-3">Status</th>
+                                    <th class="p-3 text-right">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTableBody" class="divide-y divide-fluent-cardBorderLight dark:divide-fluent-cardBorderDark">
+                                <!-- Dynamic rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: SETTINGS -->
+            <section id="view-settings" class="space-y-6 hidden">
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight">Configurações do Sistema</h1>
+                    <p class="text-sm text-fluent-textSecondaryLight dark:text-fluent-textSecondaryDark">Gerencie o banco de dados IndexedDB e efeitos de som.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="p-5 rounded-xl bg-fluent-cardLight dark:bg-fluent-cardDark border border-fluent-cardBorderLight dark:border-fluent-cardBorderDark shadow-sm space-y-4">
+                        <h2 class="font-bold text-base flex items-center gap-2"><i class="fa-solid fa-volume-high text-fluent-blue"></i> Efeitos Sonoros (Web Audio)</h2>
+                        <div class="space-y-3 text-xs">
+                            <label class="flex items-center gap-3 cursor-pointer">
+                                <input type="checkbox" id="chkAudioFeedback" checked class="rounded text-fluent-blue focus:ring-fluent-blue w-4 h-4">
+                                <span>Ativar som ao bipar códigos de barras (Beep de Confirmação/Erro)</span>
+                            </label>
+
+                            <div class="flex gap-2 pt-2">
+                                <button onclick="playBeep(800, 0.1, 'sine')" class="py-1.5 px-3 bg-gray-200 dark:bg-neutral-800 rounded hover:bg-gray-300 dark:hover:bg-neutral-700">Testar Beep Sucesso</button>
+                                <button onclick="playBeep(250, 0.3, 'sawtooth')" class="py-1.5 px-3 bg-gray-200 dark:bg-neutral-800 rounded hover:bg-gray-300 dark:hover:bg-neutral-700">Testar Beep Erro</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-5 rounded-xl bg-fluent-cardLight dark:bg-fluent-cardDark border border-fluent-cardBorderLight dark:border-fluent-cardBorderDark shadow-sm space-y-4">
+                        <h2 class="font-bold text-base flex items-center gap-2 text-rose-500"><i class="fa-solid fa-database"></i> Manutenção do IndexedDB</h2>
+                        <p class="text-xs text-fluent-textSecondaryLight dark:text-fluent-textSecondaryDark">Você pode resetar todo o banco de dados interno zerando as notas salvas.</p>
+                        
+                        <button onclick="confirmarLimpezaBanco()" class="py-2 px-4 rounded bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs transition flex items-center gap-2">
+                            <i class="fa-solid fa-trash-can"></i> Apagar Todos os Dados do Banco
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Application Logic Script -->
+    <script>
+        /* ==========================================================================
+           1. INDEXEDDB ENGINE (Native Database Layer)
+           ========================================================================== */
+        const DB_NAME = 'RecebimentoInboundDB';
+        const DB_VERSION = 1;
+
+        class LocalDB {
+            static open() {
+                return new Promise((resolve, reject) => {
+                    const req = indexedDB.open(DB_NAME, DB_VERSION);
+                    req.onerror = () => reject('Erro ao abrir o IndexedDB.');
+                    req.onsuccess = (e) => resolve(e.target.result);
+                    req.onupgradeneeded = (e) => {
+                        const db = e.target.result;
+                        // Object Store: Notas Fiscais
+                        if (!db.objectStoreNames.contains('notas')) {
+                            const store = db.createObjectStore('notas', { keyPath: 'chaveAcesso' });
+                            store.createIndex('status', 'status', { unique: false });
+                        }
+                        // Object Store: Itens
+                        if (!db.objectStoreNames.contains('itens')) {
+                            const store = db.createObjectStore('itens', { keyPath: 'id', autoIncrement: true });
+                            store.createIndex('chaveAcesso', 'chaveAcesso', { unique: false });
+                            store.createIndex('codigoEAN', 'codigoEAN', { unique: false });
+                        }
+                        // Object Store: Bipagens
+                        if (!db.objectStoreNames.contains('bipagens')) {
+                            const store = db.createObjectStore('bipagens', { keyPath: 'id', autoIncrement: true });
+                            store.createIndex('chaveAcesso', 'chaveAcesso', { unique: false });
+                        }
+                    };
+                });
+            }
+
+            static async salvarNotaEItens(nota, itens) {
+                const db = await this.open();
+                return new Promise((resolve, reject) => {
+                    const tx = db.transaction(['notas', 'itens'], 'readwrite');
+                    tx.objectStore('notas').put(nota);
+                    
+                    const itensStore = tx.objectStore('itens');
+                    itens.forEach(item => itensStore.add(item));
+
+                    tx.oncomplete = () => resolve(true);
+                    tx.onerror = (e) => reject(e.target.error);
+                });
+            }
+
+            static async obterNotas() {
+                const db = await this.open();
+                return new Promise((resolve) => {
+                    const tx = db.transaction('notas', 'readonly');
+                    const req = tx.objectStore('notas').getAll();
+                    req.onsuccess = () => resolve(req.result || []);
+                });
+            }
+
+            static async obterItensPorNota(chaveAcesso) {
+                const db = await this.open();
+                return new Promise((resolve) => {
+                    const tx = db.transaction('itens', 'readonly');
+                    const index = tx.objectStore('itens').index('chaveAcesso');
+                    const req = index.getAll(chaveAcesso);
+                    req.onsuccess = () => resolve(req.result || []);
+                });
+            }
+
+            static async registrarBipagem(bip) {
+                const db = await this.open();
+                return new Promise((resolve, reject) => {
+                    const tx = db.transaction('bipagens', 'readwrite');
+                    tx.objectStore('bipagens').add(bip);
+                    tx.oncomplete = () => resolve(true);
+                    tx.onerror = (e) => reject(e.target.error);
+                });
+            }
+
+            static async obterBipagensPorNota(chaveAcesso) {
+                const db = await this.open();
+                return new Promise((resolve) => {
+                    const tx = db.transaction('bipagens', 'readonly');
+                    const index = tx.objectStore('bipagens').index('chaveAcesso');
+                    const req = index.getAll(chaveAcesso);
+                    req.onsuccess = () => resolve(req.result || []);
+                });
+            }
+
+            static async atualizarStatusNota(chaveAcesso, novoStatus) {
+                const db = await this.open();
+                return new Promise((resolve) => {
+                    const tx = db.transaction('notas', 'readwrite');
+                    const store = tx.objectStore('notas');
+                    const req = store.get(chaveAcesso);
+                    req.onsuccess = () => {
+                        const data = req.result;
+                        if (data) {
+                            data.status = novoStatus;
+                            data.atualizadoEm = new Date().toISOString();
+                            store.put(data);
+                        }
+                    };
+                    tx.oncomplete = () => resolve(true);
+                });
+            }
+
+            static async limparTudo() {
+                const db = await this.open();
+                return new Promise((resolve) => {
+                    const tx = db.transaction(['notas', 'itens', 'bipagens'], 'readwrite');
+                    tx.objectStore('notas').clear();
+                    tx.objectStore('itens').clear();
+                    tx.objectStore('bipagens').clear();
+                    tx.oncomplete = () => resolve(true);
+                });
+            }
+        }
+
+        /* ==========================================================================
+           2. STATE & GLOBAL VARIABLES
+           ========================================================================== */
+        let tempNotaImportada = null;
+        let tempItensImportados = [];
+        let notaAtivaConferencia = null;
+        let itensNotaAtiva = [];
+        let bipagensNotaAtiva = [];
+        let historicoNotasCache = [];
+
+        /* Web Audio Synthesizer for Beeps */
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playBeep(frequency, duration, type = 'sine') {
+            if (!document.getElementById('chkAudioFeedback').checked) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.value = frequency;
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (e) {
+                console.warn('Audio Context unlock needed', e);
+            }
+        }
+
+        /* ==========================================================================
+           3. UI & TAB NAVIGATION
+           ========================================================================== */
+        function switchTab(tabName) {
+            document.querySelectorAll('main > section').forEach(sec => sec.classList.add('hidden'));
+            document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+
+            const targetView = document.getElementById(`view-${tabName}`);
+            const targetNav = document.getElementById(`nav-${tabName}`);
+
+            if (targetView) targetView.classList.remove('hidden');
+            if (targetNav) targetNav.classList.add('active');
+
+            if (tabName === 'dashboard') carregarDashboard();
+            if (tabName === 'history') carregarHistorico();
+            if (tabName === 'conference') {
+                setTimeout(() => document.getElementById('barcodeInput')?.focus(), 100);
+            }
+        }
+
+        function toggleTheme() {
+            document.documentElement.classList.toggle('dark');
+        }
+
+        /* ==========================================================================
+           4. XML PARSER (SEFAZ STANDARD NF-E)
+           ========================================================================== */
+        function parseXMLString(xmlStr) {
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(xmlStr, "text/xml");
+
+            const getTagValue = (parent, tag) => {
+                const el = parent.getElementsByTagName(tag)[0];
+                return el ? el.textContent : '';
+            };
+
+            const nNF = getTagValue(xmlDoc, 'nNF') || Math.floor(100000 + Math.random() * 900000).toString();
+            const xNome = getTagValue(xmlDoc, 'xNome') || 'Fornecedor Exemplo LTDA';
+            const cnpj = getTagValue(xmlDoc, 'CNPJ') || '00.000.000/0001-00';
+            const dhEmi = getTagValue(xmlDoc, 'dhEmi') || new Date().toISOString().split('T')[0];
+            const chNFe = getTagValue(xmlDoc, 'chNFe') || ('352310' + cnpj.replace(/\D/g,'') + nNF.padStart(9,'0') + '100000001');
+
+            const detList = xmlDoc.getElementsByTagName('det');
+            const itens = [];
+
+            if (detList.length > 0) {
+                for (let i = 0; i < detList.length; i++) {
+                    const prod = detList[i].getElementsByTagName('prod')[0];
+                    if (prod) {
+                        itens.push({
+                            codigoEAN: getTagValue(prod, 'cEAN') || getTagValue(prod, 'cProd') || `789000000${i+1}`,
+                            descricao: getTagValue(prod, 'xProd') || `Produto Exemplo ${i+1}`,
+                            unidade: getTagValue(prod, 'uCom') || 'UN',
+                            quantidadeEsperada: parseFloat(getTagValue(prod, 'qCom') || '10')
+                        });
+                    }
+                }
+            } else {
+                // Fallback demo items if raw XML missing <det>
+                itens.push(
+                    { codigoEAN: '7891000100100', descricao: 'Caixa de Leite Integral 1L', unidade: 'CX', quantidadeEsperada: 12 },
+                    { codigoEAN: '7891000100200', descricao: 'Biscoito Recheado Chocolate 140g', unidade: 'UN', quantidadeEsperada: 24 },
+                    { codigoEAN: '7891000100300', descricao: 'Café Torrado e Moído 500g', unidade: 'UN', quantidadeEsperada: 10 }
+                );
+            }
+
+            return {
+                nota: {
+                    chaveAcesso: chNFe,
+                    numero: nNF,
+                    fornecedor: xNome,
+                    cnpj: cnpj,
+                    dataEmissao: dhEmi,
+                    status: 'PENDENTE',
+                    criadoEm: new Date().toISOString()
+                },
+                itens: itens.map(it => ({ ...it, chaveAcesso: chNFe }))
+            };
+        }
+
+        function processarArquivoXML(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                exibirPreviewXML(parseXMLString(e.target.result));
+            };
+            reader.readAsText(file);
+        }
+
+        function processarTextoXML() {
+            const raw = document.getElementById('rawXmlText').value.trim();
+            if (!raw) return alert('Por favor, cole o XML da nota fiscal.');
+            exibirPreviewXML(parseXMLString(raw));
+        }
+
+        function carregarExemploRapido() {
+            const xmlDemo = `
+                <nfeProc>
+                    <NFe>
+                        <infNFe chNFe="35231012345678000199550010000012341000001234">
+                            <ide><nNF>55421</nNF><dhEmi>2023-10-25</dhEmi></ide>
+                            <emit><xNome>DISTRIBUIDORA LOGISTICA BRASIL SA</xNome><CNPJ>12345678000199</CNPJ></emit>
+                            <det nItem="1"><prod><cEAN>7891000100100</cEAN><xProd>Caixa de Leite Integral 1L</xProd><uCom>CX</uCom><qCom>10</qCom></prod></det>
+                            <det nItem="2"><prod><cEAN>7891000100200</cEAN><xProd>Biscoito Recheado Chocolate 140g</xProd><uCom>UN</uCom><qCom>20</qCom></prod></det>
+                            <det nItem="3"><prod><cEAN>7891000100300</cEAN><xProd>Café Torrado e Moído 500g</xProd><uCom>UN</uCom><qCom>15</qCom></prod></det>
+                        </infNFe>
+                    </NFe>
+                </nfeProc>
+            `;
+            exibirPreviewXML(parseXMLString(xmlDemo));
+            switchTab('import');
+        }
+
+        function exibirPreviewXML(parsed) {
+            tempNotaImportada = parsed.nota;
+            tempItensImportados = parsed.itens;
+
+            document.getElementById('prevNumeroNfe').innerText = `NF-e nº ${tempNotaImportada.numero}`;
+            document.getElementById('prevEmitente').innerText = `Emitente: ${tempNotaImportada.fornecedor} (CNPJ: ${tempNotaImportada.cnpj})`;
+            document.getElementById('prevChave').innerText = `Chave: ${tempNotaImportada.chaveAcesso}`;
+            document.getElementById('prevTotalItens').innerText = tempItensImportados.length;
+
+            const tbody = document.getElementById('prevItensTableBody');
+            tbody.innerHTML = tempItensImportados.map((it, idx) => `
+                <tr class="hover:bg-gray-50 dark:hover:bg-neutral-800 font-mono">
+                    <td class="p-2">${idx + 1}</td>
+                    <td class="p-2 font-bold text-fluent-blue">${it.codigoEAN}</td>
+                    <td class="p-2 font-sans">${it.descricao}</td>
+                    <td class="p-2 text-center">${it.unidade}</td>
+                    <td class="p-2 text-right font-bold">${it.quantidadeEsperada}</td>
+                </tr>
+            `).join('');
+
+            document.getElementById('xmlPreviewCard').classList.remove('hidden');
+        }
+
+        async function salvarEIniciarConferencia() {
+            if (!tempNotaImportada) return;
+
+            try {
+                await LocalDB.salvarNotaEItens(tempNotaImportada, tempItensImportados);
+                playBeep(900, 0.15);
+                alert('NF-e gravada com sucesso no IndexedDB!');
+                
+                await carregarNotasSelectConferencia();
+                document.getElementById('selectNotaConferencia').value = tempNotaImportada.chaveAcesso;
+                carregarNotaParaConferencia(tempNotaImportada.chaveAcesso);
+                
+                switchTab('conference');
+            } catch (err) {
+                alert('Erro ao gravar nota fiscal: ' + err);
+            }
+        }
+
+        /* ==========================================================================
+           5. BARCODE SCANNER & CONFERENCE ENGINE
+           ========================================================================== */
+        async function carregarNotasSelectConferencia() {
+            const notas = await LocalDB.obterNotas();
+            const select = document.getElementById('selectNotaConferencia');
+            select.innerHTML = '<option value="">Selecione uma Nota Fiscal...</option>' + 
+                notas.map(n => `<option value="${n.chaveAcesso}">NF-e ${n.numero} - ${n.fornecedor} (${n.status})</option>`).join('');
+        }
+
+        async function carregarNotaParaConferencia(chaveAcesso) {
+            if (!chaveAcesso) return;
+
+            const notas = await LocalDB.obterNotas();
+            notaAtivaConferencia = notas.find(n => n.chaveAcesso === chaveAcesso);
+            itensNotaAtiva = await LocalDB.obterItensPorNota(chaveAcesso);
+            bipagensNotaAtiva = await LocalDB.obterBipagensPorNota(chaveAcesso);
+
+            // Populate select box for manual damage reporting
+            const selectAvaria = document.getElementById('selectAvariaEan');
+            selectAvaria.innerHTML = itensNotaAtiva.map(it => `<option value="${it.codigoEAN}">${it.descricao} (${it.codigoEAN})</option>`).join('');
+
+            atualizarTabelaConferencia();
+            document.getElementById('barcodeInput').focus();
+        }
+
+        function atualizarTabelaConferencia() {
+            if (!notaAtivaConferencia) return;
+
+            // Map barcode count totals
+            const contagemMap = {};
+            const avariaMap = {};
+
+            bipagensNotaAtiva.forEach(b => {
+                contagemMap[b.codigoEAN] = (contagemMap[b.codigoEAN] || 0) + (b.quantidadeConferida || 0);
+                avariaMap[b.codigoEAN] = (avariaMap[b.codigoEAN] || 0) + (b.quantidadeAvaria || 0);
+            });
+
+            let totalEsperado = 0;
+            let totalConferido = 0;
+
+            const tbody = document.getElementById('confItensTableBody');
+            tbody.innerHTML = itensNotaAtiva.map(it => {
+                const conf = contagemMap[it.codigoEAN] || 0;
+                const avaria = avariaMap[it.codigoEAN] || 0;
+                totalEsperado += it.quantidadeEsperada;
+                totalConferido += conf;
+
+                let statusBadge = '<span class="px-2 py-0.5 rounded bg-gray-500/10 text-gray-500 font-sans">Pendente</span>';
+                if (conf === it.quantidadeEsperada) {
+                    statusBadge = '<span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-500 font-sans font-bold">OK</span>';
+                } else if (conf > it.quantidadeEsperada) {
+                    statusBadge = '<span class="px-2 py-0.5 rounded bg-purple-500/10 text-purple-500 font-sans font-bold">Sobra</span>';
+                } else if (conf > 0) {
+                    statusBadge = '<span class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-500 font-sans font-bold">Parcial</span>';
+                }
+
+                return `
+                    <tr class="hover:bg-gray-50 dark:hover:bg-neutral-800">
+                        <td class="p-2.5 font-bold text-fluent-blue">${it.codigoEAN}</td>
+                        <td class="p-2.5 font-sans">${it.descricao}</td>
+                        <td class="p-2.5 text-center font-bold">${it.quantidadeEsperada}</td>
+                        <td class="p-2.5 text-center font-bold ${conf > it.quantidadeEsperada ? 'text-purple-500' : 'text-emerald-500'}">${conf}</td>
+                        <td class="p-2.5 text-center font-bold text-amber-500">${avaria}</td>
+                        <td class="p-2.5 text-center">${statusBadge}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            // Progress stats
+            document.getElementById('statQtdEsperada').innerText = totalEsperado;
+            document.getElementById('statQtdConferida').innerText = totalConferido;
+
+            const percent = totalEsperado > 0 ? Math.min(100, Math.round((totalConferido / totalEsperado) * 100)) : 0;
+            document.getElementById('progressBar').style.width = `${percent}%`;
+            document.getElementById('percentText').innerText = `${percent}%`;
+        }
+
+        // Barcode Listener [Enter Key]
+        document.getElementById('barcodeInput')?.addEventListener('keypress', async function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const code = this.value.trim();
+                this.value = '';
+
+                if (!code || !notaAtivaConferencia) {
+                    playBeep(250, 0.3, 'sawtooth');
+                    mostrarFeedback('Selecione uma NF-e primeiro!', 'text-rose-500');
+                    return;
+                }
+
+                // Verify code existence
+                const itemValido = itensNotaAtiva.find(it => it.codigoEAN === code);
+                
+                const bipObj = {
+                    chaveAcesso: notaAtivaConferencia.chaveAcesso,
+                    codigoEAN: code,
+                    quantidadeConferida: 1,
+                    dataHora: new Date().toISOString()
+                };
+
+                await LocalDB.registrarBipagem(bipObj);
+                bipagensNotaAtiva.push(bipObj);
+
+                if (itemValido) {
+                    playBeep(1000, 0.1);
+                    mostrarFeedback(`✔ BIP: ${itemValido.descricao}`, 'text-emerald-500');
+                } else {
+                    playBeep(300, 0.3, 'sawtooth');
+                    mostrarFeedback(`⚠️ ATENÇÃO: Código ${code} NÃO consta no XML! (Item Fora da Nota)`, 'text-amber-500');
+                }
+
+                atualizarTabelaConferencia();
+            }
+        });
+
+        function mostrarFeedback(msg, colorClass) {
+            const el = document.getElementById('scanFeedback');
+            el.className = `text-center font-bold text-sm h-6 transition-all opacity-100 ${colorClass}`;
+            el.innerText = msg;
+            setTimeout(() => el.classList.add('opacity-0'), 3000);
+        }
+
+        async function salvarAvariaManual() {
+            if (!notaAtivaConferencia) return alert('Nenhuma nota selecionada.');
+            const ean = document.getElementById('selectAvariaEan').value;
+            const qtd = parseInt(document.getElementById('inputQtdAvaria').value) || 1;
+            const obs = document.getElementById('inputObsAvaria').value;
+
+            const bipObj = {
+                chaveAcesso: notaAtivaConferencia.chaveAcesso,
+                codigoEAN: ean,
+                quantidadeConferida: 0,
+                quantidadeAvaria: qtd,
+                observacao: obs,
+                dataHora: new Date().toISOString()
+            };
+
+            await LocalDB.registrarBipagem(bipObj);
+            bipagensNotaAtiva.push(bipObj);
+            playBeep(400, 0.2);
+            alert('Avaria registrada no banco!');
+            atualizarTabelaConferencia();
+        }
+
+        async function finalizarConferencia() {
+            if (!notaAtivaConferencia) return;
+
+            let totalEsp = 0;
+            let totalConf = 0;
+            const contagemMap = {};
+
+            bipagensNotaAtiva.forEach(b => contagemMap[b.codigoEAN] = (contagemMap[b.codigoEAN] || 0) + b.quantidadeConferida);
+            itensNotaAtiva.forEach(it => {
+                totalEsp += it.quantidadeEsperada;
+                totalConf += (contagemMap[it.codigoEAN] || 0);
+            });
+
+            const statusFinal = (totalEsp === totalConf) ? 'CONCLUIDO' : 'DIVERGENTE';
+            await LocalDB.atualizarStatusNota(notaAtivaConferencia.chaveAcesso, statusFinal);
+
+            alert(`Conferência finalizada com status: ${statusFinal}`);
+            await carregarNotasSelectConferencia();
+            switchTab('history');
+        }
+
+        /* ==========================================================================
+           6. DASHBOARD & HISTORY CONTROLLERS
+           ========================================================================== */
+        async function carregarDashboard() {
+            const notas = await LocalDB.obterNotas();
+            
+            document.getElementById('dashTotalNotas').innerText = notas.length;
+            document.getElementById('dashConcluidas').innerText = notas.filter(n => n.status === 'CONCLUIDO').length;
+            document.getElementById('dashDivergentes').innerText = notas.filter(n => n.status === 'DIVERGENTE').length;
+
+            const tbody = document.getElementById('dashTableBody');
+            if (notas.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="py-4 text-center text-gray-400">Nenhuma nota importada até o momento.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = notas.slice(-5).reverse().map(n => `
+                <tr class="hover:bg-gray-50 dark:hover:bg-neutral-800">
+                    <td class="py-2.5 font-bold font-mono">NF-e ${n.numero}</td>
+                    <td class="py-2.5">${n.fornecedor}</td>
+                    <td class="py-2.5 text-xs text-fluent-textSecondaryLight dark:text-fluent-textSecondaryDark">${n.dataEmissao}</td>
+                    <td class="py-2.5">${getBadgeStatus(n.status)}</td>
+                    <td class="py-2.5 text-right">
+                        <button onclick="abrirNotaHist('${n.chaveAcesso}')" class="px-2 py-1 bg-fluent-blue text-white rounded text-xs">Conferir</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function getBadgeStatus(st) {
+            if (st === 'CONCLUIDO') return '<span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-500 font-bold text-[10px]">CONCLUÍDA</span>';
+            if (st === 'DIVERGENTE') return '<span class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-500 font-bold text-[10px]">DIVERGENTE</span>';
+            return '<span class="px-2 py-0.5 rounded bg-blue-500/10 text-fluent-blue font-bold text-[10px]">PENDENTE</span>';
+        }
+
+        async function carregarHistorico() {
+            historicoNotasCache = await LocalDB.obterNotas();
+            filtrarHistorico();
+        }
+
+        function filtrarHistorico() {
+            const q = document.getElementById('searchHistInput').value.toLowerCase();
+            const statusFilter = document.getElementById('filterStatusHist').value;
+
+            const filtradas = historicoNotasCache.filter(n => {
+                const matchQuery = n.numero.includes(q) || n.fornecedor.toLowerCase().includes(q) || n.chaveAcesso.includes(q);
+                const matchStatus = statusFilter === 'TODOS' || n.status === statusFilter;
+                return matchQuery && matchStatus;
+            });
+
+            const tbody = document.getElementById('historyTableBody');
+            if (filtradas.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-400">Nenhum registro encontrado.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filtradas.map(n => `
+                <tr class="hover:bg-gray-50 dark:hover:bg-neutral-800">
+                    <td class="p-3 font-mono">
+                        <div class="font-bold text-fluent-blue">NF-e ${n.numero}</div>
+                        <div class="text-[10px] text-gray-400">${n.chaveAcesso}</div>
+                    </td>
+                    <td class="p-3 font-medium">${n.fornecedor}</td>
+                    <td class="p-3 text-xs text-fluent-textSecondaryLight dark:text-fluent-textSecondaryDark">${n.dataEmissao}</td>
+                    <td class="p-3">${getBadgeStatus(n.status)}</td>
+                    <td class="p-3 text-right">
+                        <button onclick="abrirNotaHist('${n.chaveAcesso}')" class="px-3 py-1.5 bg-gray-200 dark:bg-neutral-800 hover:bg-fluent-blue hover:text-white rounded text-xs transition">
+                            Abrir
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function abrirNotaHist(chaveAcesso) {
+            await carregarNotasSelectConferencia();
+            document.getElementById('selectNotaConferencia').value = chaveAcesso;
+            carregarNotaParaConferencia(chaveAcesso);
+            switchTab('conference');
+        }
+
+        /* ==========================================================================
+           7. EXPORT, BACKUP & SHORTCUTS
+           ========================================================================== */
+        async function exportarBackupJSON() {
+            const dbData = {
+                notas: await LocalDB.obterNotas(),
+                exportadoEm: new Date().toISOString()
+            };
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dbData, null, 2));
+            const dlAnchor = document.createElement('a');
+            dlAnchor.setAttribute("href", dataStr);
+            dlAnchor.setAttribute("download", `backup_recebimento_${new Date().toISOString().split('T')[0]}.json`);
+            document.body.appendChild(dlAnchor);
+            dlAnchor.click();
+            dlAnchor.remove();
+        }
+
+        async function exportarRelatorioCSV() {
+            const notas = await LocalDB.obterNotas();
+            let csv = 'Chave;Numero;Fornecedor;DataEmissao;Status\n';
+
+            notas.forEach(n => {
+                csv += `${n.chaveAcesso};${n.numero};${n.fornecedor};${n.dataEmissao};${n.status}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `relatorio_recebimento_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+        }
+
+        async function confirmarLimpezaBanco() {
+            if (confirm('Atenção: Todos os dados armazenados no IndexedDB serão apagados permanentemente! Deseja continuar?')) {
+                await LocalDB.limparTudo();
+                alert('Banco de dados limpo com sucesso!');
+                carregarDashboard();
+            }
+        }
+
+        // Global Shortcuts (F2 / F4)
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'F2') {
+                e.preventDefault();
+                switchTab('import');
+            } else if (e.key === 'F4' || e.key === 'F3') {
+                e.preventDefault();
+                switchTab('conference');
+                setTimeout(() => document.getElementById('barcodeInput')?.focus(), 100);
+            }
+        });
+
+        // App Initialization
+        window.onload = async function() {
+            try {
+                await LocalDB.open();
+                await carregarNotasSelectConferencia();
+                await carregarDashboard();
+            } catch (err) {
+                console.error("Erro na inicialização do IndexedDB", err);
+                document.getElementById('dbStatusText').innerText = "IndexedDB Com Erro";
+            }
+        };
+    </script>
+</body>
+</html>
