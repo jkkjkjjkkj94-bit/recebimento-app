@@ -105,7 +105,7 @@
         </section>
 
         <!-- Lista e Painel de Agendamentos -->
-        <section id="painelAgendamentos" class="md:col-span-2 bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col">
+        <section id="agendamento" class="md:col-span-2 bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col">
             <div class="flex justify-between items-center mb-4 pb-2 border-b border-gray-100">
                 <h2 class="text-base font-semibold text-gray-900">Agenda de Cargas e Notas Fiscais</h2>
                 <span id="totalBrindes" class="text-xs text-gray-500 font-medium">0 itens</span>
@@ -277,7 +277,7 @@
                     }
                     // Atualiza a interface imediatamente após o login, sem depender apenas do evento de sessão.
                     await atualizarSessao(data.session);
-                    document.getElementById("painelAgendamentos")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    document.getElementById("agendamento")?.scrollIntoView({ behavior: "smooth", block: "start" });
                     window.location.hash = "agendamento";
                     mostrarMensagemAuth("Login realizado. Abrindo agendamentos.");
                 }
@@ -340,8 +340,17 @@
             };
             return traduz[error?.code] || traduz[msg] || msg;
         }
-        supabase.auth.onAuthStateChange((_event, session) => {
-            setTimeout(() => atualizarSessao(session), 0);
+        supabase.auth.onAuthStateChange((_event, _session) => {
+            // Consulta a sessão atual para evitar que um evento antigo de autenticação
+            // esconda a tela de agendamentos logo após o login.
+            setTimeout(async () => {
+                const { data, error } = await supabase.auth.getSession();
+                if (error) {
+                    console.error("Erro ao verificar sessão:", error);
+                    return;
+                }
+                await atualizarSessao(data.session);
+            }, 0);
         });
         async function atualizarSessao(session=null) {
             if (session === null) {
