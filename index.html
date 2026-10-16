@@ -27,7 +27,7 @@
             </div>
             <h2 id="authTitle" class="text-xl font-semibold text-gray-900 mb-1">Entrar no sistema</h2>
             <p id="authSubtitle" class="text-sm text-gray-500 mb-5">Acesse suas notas fiscais e agendamentos salvos na nuvem.</p>
-            <form id="authForm" class="space-y-4">
+            <form id="authForm" class="space-y-4" novalidate>
                 <div><label for="authEmail" class="block text-xs font-medium text-gray-600 mb-1">E-mail</label><input id="authEmail" type="email" autocomplete="email" required placeholder="voce@empresa.com" class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></div>
                 <div><label for="authPassword" class="block text-xs font-medium text-gray-600 mb-1">Senha</label><input id="authPassword" type="password" autocomplete="current-password" required minlength="6" placeholder="Mínimo de 6 caracteres" class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></div>
                 <button id="authSubmit" type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg text-sm transition">Entrar</button>
@@ -251,6 +251,16 @@
             const email = document.getElementById("authEmail").value.trim();
             const password = document.getElementById("authPassword").value;
             const submit = document.getElementById("authSubmit");
+            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                mostrarMensagemAuth("Digite um e-mail válido para entrar.", true);
+                document.getElementById("authEmail").focus();
+                return;
+            }
+            if (!password) {
+                mostrarMensagemAuth("Digite sua senha para continuar.", true);
+                document.getElementById("authPassword").focus();
+                return;
+            }
             submit.disabled = true; submit.textContent = "Aguarde...";
             try {
                 if (modoCadastro) {
