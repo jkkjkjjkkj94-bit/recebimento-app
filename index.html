@@ -266,8 +266,13 @@
                         document.getElementById("resendConfirmation").classList.remove("hidden");
                     }
                 } else {
-                    const { error } = await supabase.auth.signInWithPassword({ email, password });
+                    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
                     if (error) throw error;
+                    if (!data || !data.session || !data.session.user) {
+                        throw new Error("O Supabase aceitou a solicitação, mas não retornou uma sessão. Verifique se o e-mail foi confirmado.");
+                    }
+                    // Atualiza a interface imediatamente após o login, sem depender apenas do evento de sessão.
+                    await atualizarSessao(data.session);
                     mostrarMensagemAuth("Login realizado.");
                 }
             } catch (error) {
