@@ -8,7 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Supabase Auth + banco na nuvem -->
+    <!-- Supabase banco na nuvem -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Dexie.js mantido para importar dados locais antigos -->
     <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
@@ -18,31 +18,8 @@
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
 
-    <!-- Acesso à conta -->
-    <section id="authScreen" class="min-h-screen flex items-center justify-center px-4 py-10">
-        <div class="bg-white w-full max-w-md rounded-2xl border border-gray-200 shadow-sm p-8">
-            <div class="flex items-center gap-3 mb-6">
-                <div class="w-11 h-11 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl">A</div>
-                <div><h1 class="font-bold text-gray-900 text-lg">ADIMAX</h1><p class="text-xs text-gray-500">Gestão de Cargas na Nuvem</p></div>
-            </div>
-            <h2 id="authTitle" class="text-xl font-semibold text-gray-900 mb-1">Entrar no sistema</h2>
-            <p id="authSubtitle" class="text-sm text-gray-500 mb-5">Acesse suas notas fiscais e agendamentos salvos na nuvem.</p>
-            <form id="authForm" class="space-y-4" novalidate>
-                <div><label for="authEmail" class="block text-xs font-medium text-gray-600 mb-1">E-mail</label><input id="authEmail" type="email" autocomplete="email" required placeholder="voce@empresa.com" class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></div>
-                <div><label for="authPassword" class="block text-xs font-medium text-gray-600 mb-1">Senha</label><input id="authPassword" type="password" autocomplete="current-password" required minlength="6" placeholder="Mínimo de 6 caracteres" class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></div>
-                <button id="authSubmit" type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg text-sm transition">Entrar</button>
-            </form>
-            <div class="flex justify-between items-center mt-4 text-xs gap-3">
-                <button id="toggleAuthMode" type="button" class="text-blue-700 hover:underline">Criar uma conta</button>
-                <button id="forgotPassword" type="button" class="text-gray-500 hover:underline">Esqueci a senha</button>
-            </div>
-            <button id="resendConfirmation" type="button" class="hidden mt-3 text-xs text-blue-700 hover:underline">Reenviar e-mail de confirmação</button>
-            <p id="authMessage" role="status" class="text-sm mt-4 hidden"></p>
-            <p class="text-xs text-gray-400 mt-6">Se o cadastro exigir confirmação, verifique o e-mail antes de entrar.</p>
-        </div>
-    </section>
-
-    <div id="appShell" class="hidden flex-col min-h-screen">
+    <!-- Aplicação sem tela de login/cadastro -->
+    <div id="appShell" class="flex flex-col min-h-screen">
     <!-- Cabeçalho -->
     <header class="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
@@ -55,9 +32,7 @@
             </div>
             
             <div class="flex items-center space-x-2 flex-wrap justify-end">
-                <span id="userEmailLabel" class="hidden sm:inline text-xs text-gray-500 max-w-[150px] truncate"></span>
                 <button type="button" onclick="importarDadosLocais()" class="bg-white border border-blue-200 hover:bg-blue-50 text-blue-700 font-medium px-3 py-1.5 rounded-lg text-xs transition shadow-sm">Importar dados antigos</button>
-                <button type="button" onclick="sair()" class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium px-3 py-1.5 rounded-lg text-xs transition shadow-sm">Sair</button>
                 <label for="importarCsv" class="cursor-pointer bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium px-3 py-1.5 rounded-lg text-xs transition shadow-sm flex items-center space-x-1">
                     <span>Importar CSV</span>
                 </label>
@@ -184,16 +159,12 @@
     </footer>
     </div>
 
-    <!-- Lógica JavaScript (Supabase Auth + PostgreSQL; Dexie para migração local) -->
+    <!-- Lógica JavaScript (Supabase público + PostgreSQL; Dexie para migração local) -->
     <script>
         const SUPABASE_URL = "https://innziuzgtpfsiywqmies.supabase.co";
         const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_fJB7zijdznI9ob9l9jSGlQ_6oU_J-d1";
-        const SITE_URL = "https://jkkjkjjkkj94-bit.github.io/recebimento-app/";
         if (!window.supabase || typeof window.supabase.createClient !== "function") {
-            const msg = document.getElementById("authMessage");
-            msg.textContent = "O módulo de conexão não carregou. Atualize a página com Ctrl + F5; se continuar, tente novamente mais tarde.";
-            msg.classList.remove("hidden");
-            msg.classList.add("text-red-600");
+            document.body.insertAdjacentHTML("afterbegin", '<div class="m-4 rounded-lg bg-red-50 p-4 text-sm text-red-700">Não foi possível conectar ao Supabase. Verifique a internet e atualize a página com Ctrl + F5.</div>');
             throw new Error("Supabase JS CDN não carregou.");
         }
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
@@ -211,190 +182,26 @@
         } catch (error) {
             console.warn("IndexedDB legado indisponível; autenticação continua habilitada.", error);
         }
-        let usuarioAtual = null;
-        let modoCadastro = false;
-
-        const authScreen = document.getElementById("authScreen");
+        // Modo sem login: todos os visitantes usam o mesmo conjunto de registros.
+        // A segurança de acesso aos dados passa a depender das políticas públicas do banco.
+        const PUBLIC_USER_ID = "00000000-0000-4000-8000-000000000001";
+        let usuarioAtual = { id: PUBLIC_USER_ID, email: "Acesso compartilhado" };
         const appShell = document.getElementById("appShell");
-        const authMessage = document.getElementById("authMessage");
-        window.addEventListener("error", (event) => {
-            console.error("Erro no ADIMAX:", event.error || event.message);
-            if (!usuarioAtual && authMessage.classList.contains("hidden")) {
-                mostrarMensagemAuth("Ocorreu um erro ao carregar o sistema. Atualize com Ctrl + F5 e tente novamente.", true);
-            }
-        });
-        window.addEventListener("unhandledrejection", (event) => {
-            console.error("Falha assíncrona no ADIMAX:", event.reason);
-            if (!usuarioAtual) {
-                const detalhe = event.reason?.message;
-                mostrarMensagemAuth(detalhe ? "Falha de conexão: " + detalhe : "Falha de conexão. Confira sua internet e tente novamente.", true);
-            }
-        });
-        function mostrarMensagemAuth(texto, erro=false) {
-            authMessage.textContent = texto;
-            authMessage.classList.remove("hidden", "text-red-600", "text-green-700");
-            authMessage.classList.add(erro ? "text-red-600" : "text-green-700");
-        }
-        function alternarModoAuth() {
-            modoCadastro = !modoCadastro;
-            document.getElementById("authTitle").textContent = modoCadastro ? "Criar conta" : "Entrar no sistema";
-            document.getElementById("authSubtitle").textContent = modoCadastro ? "Crie seu acesso para salvar os agendamentos na nuvem." : "Acesse suas notas fiscais e agendamentos salvos na nuvem.";
-            document.getElementById("authSubmit").textContent = modoCadastro ? "Criar conta" : "Entrar";
-            document.getElementById("toggleAuthMode").textContent = modoCadastro ? "Já tenho uma conta" : "Criar uma conta";
-            document.getElementById("authPassword").autocomplete = modoCadastro ? "new-password" : "current-password";
-            authMessage.classList.add("hidden");
-            document.getElementById("resendConfirmation").classList.add("hidden");
-        }
-        document.getElementById("toggleAuthMode").addEventListener("click", alternarModoAuth);
-        document.getElementById("authForm").addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const email = document.getElementById("authEmail").value.trim();
-            const password = document.getElementById("authPassword").value;
-            const submit = document.getElementById("authSubmit");
-            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                mostrarMensagemAuth("Digite um e-mail válido para entrar.", true);
-                document.getElementById("authEmail").focus();
-                return;
-            }
-            if (!password) {
-                mostrarMensagemAuth("Digite sua senha para continuar.", true);
-                document.getElementById("authPassword").focus();
-                return;
-            }
-            submit.disabled = true; submit.textContent = "Aguarde...";
+
+        async function iniciarAplicacao() {
+            appShell.classList.remove("hidden");
+            appShell.classList.add("flex");
+            const lista = document.getElementById("listaBrindes");
+            if (lista) lista.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-xs text-gray-500">Conectando ao banco de dados...</td></tr>';
             try {
-                if (modoCadastro) {
-                    const { data, error } = await supabase.auth.signUp({
-                        email, password,
-                        options: { emailRedirectTo: SITE_URL }
-                    });
-                    if (error) throw error;
-                    if (data.session && data.session.user) {
-                        // Com a confirmação de e-mail desativada, o Supabase retorna uma sessão.
-                        // Ativa a interface imediatamente em vez de depender apenas do evento de autenticação.
-                        await atualizarSessao(data.session);
-                        mostrarMensagemAuth("Conta criada com sucesso. Você já está conectado.");
-                    } else {
-                        // Se não houver sessão, a confirmação ainda está exigida nas configurações do Supabase.
-                        mostrarMensagemAuth("A conta foi registrada, mas o Supabase ainda exige confirmação por e-mail. Desative “Confirm email” em Authentication > Sign In / Providers > Email e salve as alterações.");
-                        document.getElementById("resendConfirmation").classList.remove("hidden");
-                    }
-                } else {
-                    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-                    if (error) throw error;
-                    if (!data || !data.session || !data.session.user) {
-                        throw new Error("O Supabase aceitou a solicitação, mas não retornou uma sessão. Verifique se o e-mail foi confirmado.");
-                    }
-                    // Abre a agenda imediatamente após a autenticação bem-sucedida.
-                    // O carregamento dos dados é iniciado depois, para não bloquear a navegação.
-                    usuarioAtual = data.session.user;
-                    authScreen.classList.add("hidden");
-                    appShell.classList.remove("hidden");
-                    appShell.classList.add("flex");
-                    document.getElementById("userEmailLabel").textContent = usuarioAtual.email || "";
-                    window.location.hash = "agendamento";
-                    document.getElementById("agendamento")?.scrollIntoView({ behavior: "smooth", block: "start" });
-                    const lista = document.getElementById("listaBrindes");
-                    if (lista) lista.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-xs text-gray-500">Carregando agendamentos...</td></tr>';
-                    carregarBrindes().catch((loadError) => {
-                        console.error("Erro ao carregar agendamentos após login:", loadError);
-                        if (lista) lista.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-xs text-red-600">Login realizado, mas não foi possível carregar os agendamentos. Atualize a página ou verifique a conexão.</td></tr>';
-                    });
-                }
-            } catch (error) {
-                mostrarMensagemAuth(mensagemErroAuth(error), true);
-            } finally {
-                submit.disabled = false;
-                submit.textContent = modoCadastro ? "Criar conta" : "Entrar";
-            }
-        });
-        window.__adimaxAuthReady = true;
-        document.getElementById("resendConfirmation").addEventListener("click", async () => {
-            const email = document.getElementById("authEmail").value.trim();
-            if (!email) {
-                mostrarMensagemAuth("Digite seu e-mail no campo acima antes de reenviar.", true);
-                return;
-            }
-            const button = document.getElementById("resendConfirmation");
-            button.disabled = true;
-            button.textContent = "Enviando...";
-            try {
-                const { error } = await supabase.auth.resend({
-                    type: "signup",
-                    email,
-                    options: { emailRedirectTo: SITE_URL }
-                });
-                if (error) throw error;
-                mostrarMensagemAuth("Se o cadastro existir e ainda precisar de confirmação, enviaremos um novo e-mail.");
-            } catch (error) {
-                mostrarMensagemAuth(mensagemErroAuth(error), true);
-            } finally {
-                button.disabled = false;
-                button.textContent = "Reenviar e-mail de confirmação";
-            }
-        });
-        document.getElementById("forgotPassword").addEventListener("click", async () => {
-            const email = document.getElementById("authEmail").value.trim();
-            if (!email) { mostrarMensagemAuth("Digite seu e-mail primeiro.", true); return; }
-            try {
-                const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                    redirectTo: SITE_URL
-                });
-                if (error) throw error;
-                mostrarMensagemAuth("Se o e-mail estiver cadastrado, você receberá instruções para redefinir a senha.");
-            } catch (error) { mostrarMensagemAuth(mensagemErroAuth(error), true); }
-        });
-        function mensagemErroAuth(error) {
-            const msg = (error && error.message) ? error.message : "Não foi possível concluir a operação.";
-            const traduz = {
-                "Invalid login credentials": "E-mail ou senha incorretos. Confira os dados ou use “Esqueci a senha”.",
-                "invalid_credentials": "E-mail ou senha incorretos. Confira os dados ou use “Esqueci a senha”.",
-                "Email not confirmed": "Seu e-mail ainda não foi confirmado. Abra a mensagem enviada pelo Supabase ou peça um novo e-mail de confirmação.",
-                "email_not_confirmed": "Seu e-mail ainda não foi confirmado. Abra a mensagem enviada pelo Supabase ou peça um novo e-mail de confirmação.",
-                "User already registered": "Este e-mail já possui uma conta. Entre ou recupere a senha.",
-                "user_already_exists": "Este e-mail já possui uma conta. Entre ou recupere a senha.",
-                "Password should be at least 6 characters": "A senha precisa ter pelo menos 6 caracteres.",
-                "over_email_send_rate_limit": "Muitos e-mails foram solicitados em pouco tempo. Aguarde e tente novamente.",
-                "email_address_invalid": "O formato do e-mail é inválido.",
-                "weak_password": "A senha não atende aos requisitos de segurança do Supabase."
-            };
-            return traduz[error?.code] || traduz[msg] || msg;
-        }
-        supabase.auth.onAuthStateChange((_event, _session) => {
-            // Consulta a sessão atual para evitar que um evento antigo de autenticação
-            // esconda a tela de agendamentos logo após o login.
-            setTimeout(async () => {
-                const { data, error } = await supabase.auth.getSession();
-                if (error) {
-                    console.error("Erro ao verificar sessão:", error);
-                    return;
-                }
-                await atualizarSessao(data.session);
-            }, 0);
-        });
-        async function atualizarSessao(session=null) {
-            if (session === null) {
-                const result = await supabase.auth.getSession();
-                session = result.data.session;
-            }
-            usuarioAtual = session?.user || null;
-            if (usuarioAtual) {
-                authScreen.classList.add("hidden");
-                appShell.classList.remove("hidden");
-                appShell.classList.add("flex");
-                document.getElementById("userEmailLabel").textContent = usuarioAtual.email || "";
                 await carregarBrindes();
-            } else {
-                appShell.classList.add("hidden");
-                appShell.classList.remove("flex");
-                authScreen.classList.remove("hidden");
+            } catch (error) {
+                console.error("Erro ao carregar agendamentos:", error);
+                if (lista) lista.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-xs text-red-600">Não foi possível carregar os dados da nuvem. Confira a conexão e as permissões do banco.</td></tr>';
             }
         }
-        window.sair = async function() {
-            const { error } = await supabase.auth.signOut();
-            if (error) alert("Não foi possível sair: " + error.message);
-        };
-        window.onload = () => atualizarSessao();
+        window.addEventListener("load", iniciarAplicacao);
+        window.__adimaxAuthReady = true;
 
         async function consultarAgendamentos() {
             const { data, error } = await supabase.from("agendamentos_cargas").select("*").order("agendamento", { ascending: true });
@@ -697,7 +504,7 @@
 
         // Importação explícita de registros que ainda estejam no IndexedDB deste navegador.
         window.importarDadosLocais = async function() {
-            if (!usuarioAtual) { alert("Entre na sua conta primeiro."); return; }
+            if (!usuarioAtual) { alert("O sistema ainda está iniciando. Atualize a página e tente novamente."); return; }
             if (!db) { alert("A importação de dados antigos não carregou. Isso não afeta o login nem os dados na nuvem."); return; }
             try {
                 const locais = await db.brindes.toArray();
@@ -705,7 +512,7 @@
                     alert("Não encontramos registros antigos salvos neste navegador.");
                     return;
                 }
-                const ok = confirm(`Encontramos ${locais.length} registro(s) local(is). Importar para a nuvem da conta ${usuarioAtual.email}? Os registros locais serão mantidos e não serão apagados.`);
+                const ok = confirm(`Encontramos ${locais.length} registro(s) local(is). Importar para a base compartilhada na nuvem? Os registros locais serão mantidos e não serão apagados.`);
                 if (!ok) return;
                 let importados = 0;
                 for (const b of locais) {
@@ -724,115 +531,6 @@
                 alert("Erro ao importar dados locais: " + (error.message || error));
             }
         };
-    </script>
-
-    <!-- Fallback independente: mantém o cadastro funcional se o script principal falhar ao iniciar. -->
-    <script>
-    (() => {
-        if (window.__adimaxAuthReady) return;
-        const form = document.getElementById("authForm");
-        const submit = document.getElementById("authSubmit");
-        const message = document.getElementById("authMessage");
-        const toggle = document.getElementById("toggleAuthMode");
-        const title = document.getElementById("authTitle");
-        const subtitle = document.getElementById("authSubtitle");
-        const password = document.getElementById("authPassword");
-        const resend = document.getElementById("resendConfirmation");
-        let signupMode = false;
-        const say = (text, error = false) => {
-            message.textContent = text;
-            message.classList.remove("hidden", "text-red-600", "text-green-700");
-            message.classList.add(error ? "text-red-600" : "text-green-700");
-        };
-        const translate = (err) => {
-            const code = err && err.code;
-            const msg = err && err.message;
-            const known = {
-                user_already_exists: "Este e-mail já possui uma conta. Entre ou recupere a senha.",
-                email_address_invalid: "O formato do e-mail é inválido.",
-                weak_password: "A senha não atende aos requisitos de segurança.",
-                over_email_send_rate_limit: "Muitos e-mails foram solicitados. Aguarde e tente novamente.",
-                email_not_confirmed: "Confirme seu e-mail antes de entrar.",
-                invalid_credentials: "E-mail ou senha incorretos."
-            };
-            return known[code] || msg || "Não foi possível concluir a operação. Tente novamente.";
-        };
-        if (!window.supabase || typeof window.supabase.createClient !== "function") {
-            say("A conexão com o serviço de autenticação não carregou. Atualize com Ctrl + F5 e tente novamente.", true);
-            return;
-        }
-        const client = window.supabase.createClient(
-            "https://innziuzgtpfsiywqmies.supabase.co",
-            "sb_publishable_fJB7zijdznI9ob9l9jSGlQ_6oU_J-d1",
-            { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }
-        );
-        toggle.addEventListener("click", () => {
-            signupMode = !signupMode;
-            title.textContent = signupMode ? "Criar conta" : "Entrar no sistema";
-            subtitle.textContent = signupMode ? "Crie seu acesso para salvar os agendamentos na nuvem." : "Acesse suas notas fiscais e agendamentos salvos na nuvem.";
-            submit.textContent = signupMode ? "Criar conta" : "Entrar";
-            toggle.textContent = signupMode ? "Já tenho uma conta" : "Criar uma conta";
-            password.autocomplete = signupMode ? "new-password" : "current-password";
-            message.classList.add("hidden");
-        });
-        form.addEventListener("submit", async (event) => {
-            event.preventDefault();
-            const email = document.getElementById("authEmail").value.trim();
-            const pass = password.value;
-            submit.disabled = true;
-            submit.textContent = signupMode ? "Criando conta..." : "Entrando...";
-            say(signupMode ? "Enviando solicitação de cadastro..." : "Verificando seus dados...");
-            try {
-                let result;
-                if (signupMode) {
-                    result = await client.auth.signUp({
-                        email, password: pass,
-                        options: { emailRedirectTo: "https://jkkjkjjkkj94-bit.github.io/recebimento-app/" }
-                    });
-                    if (result.error) throw result.error;
-                    if (result.data && result.data.session) {
-                        say("Conta criada com sucesso. Atualize a página se não entrar automaticamente.");
-                    } else {
-                        say("Solicitação enviada. Se a confirmação por e-mail estiver ativada, abra o e-mail recebido para confirmar a conta.");
-                        resend.classList.remove("hidden");
-                    }
-                } else {
-                    result = await client.auth.signInWithPassword({ email, password: pass });
-                    if (result.error) throw result.error;
-                    say("Login realizado. Atualizando a página...");
-                    window.location.reload();
-                }
-            } catch (err) {
-                say(translate(err), true);
-                console.error("Falha de autenticação ADIMAX:", err);
-            } finally {
-                submit.disabled = false;
-                submit.textContent = signupMode ? "Criar conta" : "Entrar";
-            }
-        });
-        resend.addEventListener("click", async () => {
-            const email = document.getElementById("authEmail").value.trim();
-            if (!email) return say("Digite seu e-mail antes de reenviar.", true);
-            resend.disabled = true;
-            try {
-                const { error } = await client.auth.resend({
-                    type: "signup", email,
-                    options: { emailRedirectTo: "https://jkkjkjjkkj94-bit.github.io/recebimento-app/" }
-                });
-                if (error) throw error;
-                say("Se o cadastro existir e precisar de confirmação, um novo e-mail será enviado.");
-            } catch (err) {
-                say(translate(err), true);
-            } finally {
-                resend.disabled = false;
-            }
-        });
-        window.addEventListener("error", (event) => {
-            if (!message.textContent.trim()) say("Erro ao iniciar o sistema. Atualize a página com Ctrl + F5.", true);
-            console.error("Erro JavaScript ADIMAX:", event.message);
-        });
-        console.warn("Modo de autenticação alternativo ativado.");
-    })();
     </script>
 
 </body>
