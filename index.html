@@ -259,10 +259,14 @@
                         options: { emailRedirectTo: SITE_URL }
                     });
                     if (error) throw error;
-                    if (data.session) {
-                        mostrarMensagemAuth("Conta criada! Entrando no sistema...");
+                    if (data.session && data.session.user) {
+                        // Com a confirmação de e-mail desativada, o Supabase retorna uma sessão.
+                        // Ativa a interface imediatamente em vez de depender apenas do evento de autenticação.
+                        await atualizarSessao(data.session);
+                        mostrarMensagemAuth("Conta criada com sucesso. Você já está conectado.");
                     } else {
-                        mostrarMensagemAuth("Cadastro enviado. Abra o e-mail de confirmação e clique no link. Depois, volte a esta página e entre.");
+                        // Se não houver sessão, a confirmação ainda está exigida nas configurações do Supabase.
+                        mostrarMensagemAuth("A conta foi registrada, mas o Supabase ainda exige confirmação por e-mail. Desative “Confirm email” em Authentication > Sign In / Providers > Email e salve as alterações.");
                         document.getElementById("resendConfirmation").classList.remove("hidden");
                     }
                 } else {
