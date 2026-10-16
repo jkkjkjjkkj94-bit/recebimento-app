@@ -36,6 +36,7 @@
                 <button id="toggleAuthMode" type="button" class="text-blue-700 hover:underline">Criar uma conta</button>
                 <button id="forgotPassword" type="button" class="text-gray-500 hover:underline">Esqueci a senha</button>
             </div>
+            <button id="resendConfirmation" type="button" class="hidden mt-3 text-xs text-blue-700 hover:underline">Reenviar e-mail de confirmação</button>
             <p id="authMessage" role="status" class="text-sm mt-4 hidden"></p>
             <p class="text-xs text-gray-400 mt-6">Se o cadastro exigir confirmação, verifique o e-mail antes de entrar.</p>
         </div>
@@ -187,7 +188,10 @@
     <script>
         const SUPABASE_URL = "https://innziuzgtpfsiywqmies.supabase.co";
         const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_fJB7zijdznI9ob9l9jSGlQ_6oU_J-d1";
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+        const SITE_URL = "https://jkkjkjjkkj94-bit.github.io/recebimento-app/";
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+            auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+        });
         const db = new Dexie("AdimaxNotasFiscaisDB");
         db.version(2).stores({
             brindes: '++id, codigo, familia, descricao, agendamento, concluido'
@@ -211,6 +215,7 @@
             document.getElementById("toggleAuthMode").textContent = modoCadastro ? "Já tenho uma conta" : "Criar uma conta";
             document.getElementById("authPassword").autocomplete = modoCadastro ? "new-password" : "current-password";
             authMessage.classList.add("hidden");
+            document.getElementById("resendConfirmation").classList.add("hidden");
         }
         document.getElementById("toggleAuthMode").addEventListener("click", alternarModoAuth);
         document.getElementById("authForm").addEventListener("submit", async (e) => {
@@ -221,12 +226,16 @@
             submit.disabled = true; submit.textContent = "Aguarde...";
             try {
                 if (modoCadastro) {
-                    const { data, error } = await supabase.auth.signUp({ email, password });
+                    const { data, error } = await supabase.auth.signUp({
+                        email, password,
+                        options: { emailRedirectTo: SITE_URL }
+                    });
                     if (error) throw error;
                     if (data.session) {
                         mostrarMensagemAuth("Conta criada! Entrando no sistema...");
                     } else {
-                        mostrarMensagemAuth("Cadastro enviado. Confira seu e-mail para confirmar a conta e depois entre.");
+                        mostrarMensagemAuth("Cadastro enviado. Abra o e-mail de confirmação e clique no link. Depois, volte a esta página e entre.");
+                        document.getElementById("resendConfirmation").classList.remove("hidden");
                     }
                 } else {
                     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -240,11 +249,37 @@
                 submit.textContent = modoCadastro ? "Criar conta" : "Entrar";
             }
         });
+        document.getElementById("resendConfirmation").addEventListener("click", async () => {
+            const email = document.getElementById("authEmail").value.trim();
+            if (!email) {
+                mostrarMensagemAuth("Digite seu e-mail no campo acima antes de reenviar.", true);
+                return;
+            }
+            const button = document.getElementById("resendConfirmation");
+            button.disabled = true;
+            button.textContent = "Enviando...";
+            try {
+                const { error } = await supabase.auth.resend({
+                    type: "signup",
+                    email,
+                    options: { emailRedirectTo: SITE_URL }
+                });
+                if (error) throw error;
+                mostrarMensagemAuth("Se o cadastro existir e ainda precisar de confirmação, enviaremos um novo e-mail.");
+            } catch (error) {
+                mostrarMensagemAuth(mensagemErroAuth(error), true);
+            } finally {
+                button.disabled = false;
+                button.textContent = "Reenviar e-mail de confirmação";
+            }
+        });
         document.getElementById("forgotPassword").addEventListener("click", async () => {
             const email = document.getElementById("authEmail").value.trim();
             if (!email) { mostrarMensagemAuth("Digite seu e-mail primeiro.", true); return; }
             try {
-                const { error } = await supabase.auth.resetPasswordForEmail(email);
+                const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                    redirectTo: SITE_URL
+                });
                 if (error) throw error;
                 mostrarMensagemAuth("Se o e-mail estiver cadastrado, você receberá instruções para redefinir a senha.");
             } catch (error) { mostrarMensagemAuth(mensagemErroAuth(error), true); }
@@ -252,12 +287,18 @@
         function mensagemErroAuth(error) {
             const msg = (error && error.message) ? error.message : "Não foi possível concluir a operação.";
             const traduz = {
-                "Invalid login credentials": "E-mail ou senha incorretos.",
-                "Email not confirmed": "Confirme seu e-mail antes de entrar.",
+                "Invalid login credentials": "E-mail ou senha incorretos. Confira os dados ou use “Esqueci a senha”.",
+                "invalid_credentials": "E-mail ou senha incorretos. Confira os dados ou use “Esqueci a senha”.",
+                "Email not confirmed": "Seu e-mail ainda não foi confirmado. Abra a mensagem enviada pelo Supabase ou peça um novo e-mail de confirmação.",
+                "email_not_confirmed": "Seu e-mail ainda não foi confirmado. Abra a mensagem enviada pelo Supabase ou peça um novo e-mail de confirmação.",
                 "User already registered": "Este e-mail já possui uma conta. Entre ou recupere a senha.",
-                "Password should be at least 6 characters": "A senha precisa ter pelo menos 6 caracteres."
+                "user_already_exists": "Este e-mail já possui uma conta. Entre ou recupere a senha.",
+                "Password should be at least 6 characters": "A senha precisa ter pelo menos 6 caracteres.",
+                "over_email_send_rate_limit": "Muitos e-mails foram solicitados em pouco tempo. Aguarde e tente novamente.",
+                "email_address_invalid": "O formato do e-mail é inválido.",
+                "weak_password": "A senha não atende aos requisitos de segurança do Supabase."
             };
-            return traduz[msg] || msg;
+            return traduz[error?.code] || traduz[msg] || msg;
         }
         supabase.auth.onAuthStateChange((_event, session) => {
             setTimeout(() => atualizarSessao(session), 0);
