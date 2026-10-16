@@ -189,19 +189,47 @@
         const SUPABASE_URL = "https://innziuzgtpfsiywqmies.supabase.co";
         const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_fJB7zijdznI9ob9l9jSGlQ_6oU_J-d1";
         const SITE_URL = "https://jkkjkjjkkj94-bit.github.io/recebimento-app/";
+        if (!window.supabase || typeof window.supabase.createClient !== "function") {
+            const msg = document.getElementById("authMessage");
+            msg.textContent = "O módulo de conexão não carregou. Atualize a página com Ctrl + F5; se continuar, tente novamente mais tarde.";
+            msg.classList.remove("hidden");
+            msg.classList.add("text-red-600");
+            throw new Error("Supabase JS CDN não carregou.");
+        }
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
             auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
         });
-        const db = new Dexie("AdimaxNotasFiscaisDB");
-        db.version(2).stores({
-            brindes: '++id, codigo, familia, descricao, agendamento, concluido'
-        });
+        // O IndexedDB antigo é opcional; sua falha não deve bloquear login/cadastro na nuvem.
+        let db = null;
+        try {
+            if (typeof window.Dexie === "function") {
+                db = new window.Dexie("AdimaxNotasFiscaisDB");
+                db.version(2).stores({
+                    brindes: '++id, codigo, familia, descricao, agendamento, concluido'
+                });
+            }
+        } catch (error) {
+            console.warn("IndexedDB legado indisponível; autenticação continua habilitada.", error);
+        }
         let usuarioAtual = null;
         let modoCadastro = false;
 
         const authScreen = document.getElementById("authScreen");
         const appShell = document.getElementById("appShell");
         const authMessage = document.getElementById("authMessage");
+        window.addEventListener("error", (event) => {
+            console.error("Erro no ADIMAX:", event.error || event.message);
+            if (!usuarioAtual && authMessage.classList.contains("hidden")) {
+                mostrarMensagemAuth("Ocorreu um erro ao carregar o sistema. Atualize com Ctrl + F5 e tente novamente.", true);
+            }
+        });
+        window.addEventListener("unhandledrejection", (event) => {
+            console.error("Falha assíncrona no ADIMAX:", event.reason);
+            if (!usuarioAtual) {
+                const detalhe = event.reason?.message;
+                mostrarMensagemAuth(detalhe ? "Falha de conexão: " + detalhe : "Falha de conexão. Confira sua internet e tente novamente.", true);
+            }
+        });
         function mostrarMensagemAuth(texto, erro=false) {
             authMessage.textContent = texto;
             authMessage.classList.remove("hidden", "text-red-600", "text-green-700");
@@ -629,6 +657,7 @@
         // Importação explícita de registros que ainda estejam no IndexedDB deste navegador.
         window.importarDadosLocais = async function() {
             if (!usuarioAtual) { alert("Entre na sua conta primeiro."); return; }
+            if (!db) { alert("A importação de dados antigos não carregou. Isso não afeta o login nem os dados na nuvem."); return; }
             try {
                 const locais = await db.brindes.toArray();
                 if (!locais.length) {
