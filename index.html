@@ -79,11 +79,12 @@
                     class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg text-sm transition shadow-sm">
                     Salvar Agendamento
                 </button>
+                <p id="mensagemAgendamento" role="status" aria-live="polite" class="text-xs mt-2"></p>
             </form>
         </section>
 
         <!-- Lista e Painel de Agendamentos -->
-        <section id="agendamento" class="md:col-span-2 bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col">
+        <section id="painelAgendamentos" class="md:col-span-2 bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col">
             <div class="flex justify-between items-center mb-4 pb-2 border-b border-gray-100">
                 <h2 class="text-base font-semibold text-gray-900">Agenda de Cargas e Notas Fiscais</h2>
                 <span id="totalBrindes" class="text-xs text-gray-500 font-medium">0 itens</span>
@@ -283,12 +284,26 @@
             const descricao = document.getElementById("descricao").value.trim(); // Descrição
             const agendamento = document.getElementById("agendamento").value;
 
+            const botaoSalvar = document.querySelector('#formBrinde button[type="submit"]');
+            const mensagem = document.getElementById("mensagemAgendamento");
+            botaoSalvar.disabled = true;
+            botaoSalvar.textContent = "Salvando...";
+            mensagem.className = "text-xs mt-2 text-gray-500";
+            mensagem.textContent = "Enviando para o banco de dados...";
             try {
                 await inserirAgendamento({ codigo, familia, descricao, agendamento, concluido: false });
                 document.getElementById("formBrinde").reset();
-                carregarBrindes();
+                await carregarBrindes();
+                mensagem.className = "text-xs mt-2 text-green-700";
+                mensagem.textContent = "Agendamento salvo com sucesso na nuvem.";
             } catch (error) {
-                alert("Erro ao salvar o agendamento: " + error);
+                console.error("Erro ao salvar o agendamento:", error);
+                mensagem.className = "text-xs mt-2 text-red-700";
+                mensagem.textContent = "Não foi possível salvar: " + (error?.message || error?.details || JSON.stringify(error));
+                alert("Erro ao salvar o agendamento:\n" + (error?.message || error?.details || JSON.stringify(error)));
+            } finally {
+                botaoSalvar.disabled = false;
+                botaoSalvar.textContent = "Salvar Agendamento";
             }
         });
 
@@ -371,6 +386,7 @@
                 });
             } catch (error) {
                 console.error("Erro ao carregar os dados:", error);
+                listaElement.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-xs text-red-600">Falha ao consultar a nuvem: ' + String(error?.message || error).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])) + '</td></tr>';
             }
         }
 
