@@ -285,11 +285,21 @@
                     if (!data || !data.session || !data.session.user) {
                         throw new Error("O Supabase aceitou a solicitação, mas não retornou uma sessão. Verifique se o e-mail foi confirmado.");
                     }
-                    // Atualiza a interface imediatamente após o login, sem depender apenas do evento de sessão.
-                    await atualizarSessao(data.session);
-                    document.getElementById("agendamento")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    // Abre a agenda imediatamente após a autenticação bem-sucedida.
+                    // O carregamento dos dados é iniciado depois, para não bloquear a navegação.
+                    usuarioAtual = data.session.user;
+                    authScreen.classList.add("hidden");
+                    appShell.classList.remove("hidden");
+                    appShell.classList.add("flex");
+                    document.getElementById("userEmailLabel").textContent = usuarioAtual.email || "";
                     window.location.hash = "agendamento";
-                    mostrarMensagemAuth("Login realizado. Abrindo agendamentos.");
+                    document.getElementById("agendamento")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    const lista = document.getElementById("listaBrindes");
+                    if (lista) lista.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-xs text-gray-500">Carregando agendamentos...</td></tr>';
+                    carregarBrindes().catch((loadError) => {
+                        console.error("Erro ao carregar agendamentos após login:", loadError);
+                        if (lista) lista.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-xs text-red-600">Login realizado, mas não foi possível carregar os agendamentos. Atualize a página ou verifique a conexão.</td></tr>';
+                    });
                 }
             } catch (error) {
                 mostrarMensagemAuth(mensagemErroAuth(error), true);
