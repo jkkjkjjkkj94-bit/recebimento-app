@@ -8,16 +8,47 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Dexie.js (IndexedDB Offline) -->
-    <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
+    <!-- Supabase JavaScript client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
+    <!-- Autenticação: os dados são isolados por usuário no Supabase -->
+    <section id="authPanel" class="hidden min-h-screen items-center justify-center px-4 py-10">
+        <div class="w-full max-w-md bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-11 h-11 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl">A</div>
+                <div>
+                    <h1 class="text-xl font-semibold text-gray-900">ADIMAX</h1>
+                    <p class="text-sm text-gray-500">Gestão de Cargas e Notas Fiscais</p>
+                </div>
+            </div>
+            <h2 id="authTitle" class="text-lg font-semibold mb-1">Entrar no sistema</h2>
+            <p id="authDescription" class="text-sm text-gray-500 mb-5">Entre com seu e-mail e senha para acessar os agendamentos.</p>
+            <form id="authForm" class="space-y-4">
+                <div>
+                    <label for="authEmail" class="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
+                    <input id="authEmail" type="email" autocomplete="email" required class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label for="authPassword" class="block text-sm font-medium text-gray-700 mb-1">Senha</label>
+                    <input id="authPassword" type="password" minlength="6" autocomplete="current-password" required class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <p class="text-xs text-gray-400 mt-1">Mínimo de 6 caracteres.</p>
+                </div>
+                <p id="authMessage" role="status" class="hidden text-sm rounded-lg p-3"></p>
+                <button id="authSubmit" type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg text-sm transition">Entrar</button>
+            </form>
+            <p class="text-sm text-center text-gray-500 mt-5">
+                <span id="authSwitchText">Ainda não tem conta?</span>
+                <button id="authSwitch" type="button" class="text-blue-700 font-semibold hover:underline ml-1">Criar conta</button>
+            </p>
+        </div>
+    </section>
 
     <!-- Cabeçalho -->
-    <header class="bg-white border-b border-gray-200 sticky top-0 z-10">
+    <header id="appHeader" class="hidden bg-white border-b border-gray-200 sticky top-0 z-10">
         <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
             <div class="flex items-center space-x-3">
                 <div class="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-sm">A</div>
@@ -28,6 +59,8 @@
             </div>
             
             <div class="flex items-center space-x-2">
+                <span id="signedInEmail" class="hidden sm:inline text-xs text-gray-500 max-w-40 truncate"></span>
+                <button type="button" onclick="sair()" class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium px-3 py-1.5 rounded-lg text-xs transition">Sair</button>
                 <label for="importarCsv" class="cursor-pointer bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium px-3 py-1.5 rounded-lg text-xs transition shadow-sm flex items-center space-x-1">
                     <span>Importar CSV</span>
                 </label>
@@ -41,7 +74,7 @@
     </header>
 
     <!-- Conteúdo Principal -->
-    <main class="max-w-6xl mx-auto px-6 py-8 flex-grow w-full grid grid-cols-1 md:grid-cols-3 gap-8">
+    <main id="appMain" class="hidden max-w-6xl mx-auto px-6 py-8 flex-grow w-full grid grid-cols-1 md:grid-cols-3 gap-8">
         
         <!-- Formulário de Cadastro / Novo Agendamento -->
         <section class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm h-fit">
@@ -149,191 +182,271 @@
     </div>
 
     <!-- Rodapé -->
-    <footer class="bg-white border-t border-gray-200 py-4 text-center text-xs text-gray-400">
+    <footer id="appFooter" class="hidden bg-white border-t border-gray-200 py-4 text-center text-xs text-gray-400">
         ADIMAX &copy; 2026 - Gestão de Agendamentos e Notas Fiscais
     </footer>
 
-    <!-- Lógica JavaScript (IndexedDB / Dexie.js) -->
+    <!-- Lógica JavaScript (Supabase Auth + PostgreSQL) -->
     <script>
-        const db = new Dexie("AdimaxNotasFiscaisDB");
-        db.version(2).stores({
-            brindes: '++id, codigo, familia, descricao, agendamento, concluido'
+        // Este é um publishable key, próprio para uso no navegador.
+        // A segurança dos dados é aplicada pelas políticas RLS no Supabase.
+        const SUPABASE_URL = "https://innziuzgtpfsiywqmies.supabase.co";
+        const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_fJB7zijdznI9ob9l9jSGlQ_6oU_J-d1";
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+        let usuarioAtual = null;
+        let modoAuth = "login";
+
+        window.addEventListener("load", async () => {
+            document.getElementById("authForm").addEventListener("submit", processarAutenticacao);
+            document.getElementById("authSwitch").addEventListener("click", alternarModoAuth);
+
+            const { data, error } = await supabaseClient.auth.getSession();
+            if (error) {
+                mostrarAuthMensagem("Não foi possível verificar sua sessão: " + error.message, true);
+                mostrarTelaAuth();
+                return;
+            }
+            await atualizarSessao(data.session);
+
+            supabaseClient.auth.onAuthStateChange((_event, session) => {
+                // Evita operações de banco dentro do callback síncrono do Auth.
+                setTimeout(() => atualizarSessao(session), 0);
+            });
         });
 
-        window.onload = function() {
-            carregarBrindes();
-        };
+        async function atualizarSessao(session) {
+            usuarioAtual = session?.user || null;
+            const ids = ["appHeader", "appMain", "appFooter"];
+            ids.forEach(id => document.getElementById(id).classList.toggle("hidden", !usuarioAtual));
+            document.getElementById("authPanel").classList.toggle("hidden", !!usuarioAtual);
+            document.getElementById("authPanel").classList.toggle("flex", !usuarioAtual);
+            document.getElementById("signedInEmail").textContent = usuarioAtual?.email || "";
+            if (usuarioAtual) await carregarBrindes();
+            else document.getElementById("listaBrindes").innerHTML = "";
+        }
 
-        function obterStatusAgendamento(brinde) {
-            if (brinde.concluido) {
-                return { 
-                    status: 'concluido', 
-                    texto: 'Concluída / Recebida', 
-                    badgeClass: 'bg-blue-50 text-blue-700 border-blue-200 font-semibold' 
-                };
-            }
+        function mostrarTelaAuth() {
+            document.getElementById("authPanel").classList.remove("hidden");
+            document.getElementById("authPanel").classList.add("flex");
+            ["appHeader", "appMain", "appFooter"].forEach(id => document.getElementById(id).classList.add("hidden"));
+        }
 
-            if (!brinde.agendamento) {
-                return { 
-                    status: 'sem_agendamento', 
-                    texto: 'Não agendado', 
-                    badgeClass: 'bg-gray-100 text-gray-600 border-gray-200' 
-                };
-            }
+        function alternarModoAuth() {
+            modoAuth = modoAuth === "login" ? "signup" : "login";
+            const cadastro = modoAuth === "signup";
+            document.getElementById("authTitle").textContent = cadastro ? "Criar conta ADIMAX" : "Entrar no sistema";
+            document.getElementById("authDescription").textContent = cadastro
+                ? "Cadastre seu e-mail e uma senha para acessar o sistema."
+                : "Entre com seu e-mail e senha para acessar os agendamentos.";
+            document.getElementById("authSubmit").textContent = cadastro ? "Criar conta" : "Entrar";
+            document.getElementById("authSwitchText").textContent = cadastro ? "Já tem conta?" : "Ainda não tem conta?";
+            document.getElementById("authSwitch").textContent = cadastro ? "Entrar" : "Criar conta";
+            document.getElementById("authPassword").autocomplete = cadastro ? "new-password" : "current-password";
+            limparAuthMensagem();
+        }
 
-            const hoje = new Date();
-            hoje.setHours(0, 0, 0, 0);
+        function mostrarAuthMensagem(mensagem, erro = false) {
+            const el = document.getElementById("authMessage");
+            el.textContent = mensagem;
+            el.className = "text-sm rounded-lg p-3 " + (erro ? "bg-red-50 text-red-700" : "bg-blue-50 text-blue-700");
+        }
 
-            const dataAgendada = new Date(brinde.agendamento + 'T00:00:00');
-            const diffDias = Math.round((dataAgendada - hoje) / (1000 * 60 * 60 * 24));
+        function limparAuthMensagem() {
+            const el = document.getElementById("authMessage");
+            el.textContent = "";
+            el.className = "hidden text-sm rounded-lg p-3";
+        }
 
-            if (diffDias < 0) {
-                return { 
-                    status: 'vencidos', 
-                    texto: dataAgendada.toLocaleDateString('pt-BR') + ' (Vencido)', 
-                    badgeClass: 'bg-red-50 text-red-700 border-red-200 font-semibold' 
-                };
-            } else if (diffDias === 0) {
-                return { 
-                    status: 'hoje', 
-                    texto: dataAgendada.toLocaleDateString('pt-BR') + ' (Hoje)', 
-                    badgeClass: 'bg-white text-gray-800 border-gray-300 shadow-sm font-bold' 
-                };
-            } else {
-                return { 
-                    status: 'futuros', 
-                    texto: `${dataAgendada.toLocaleDateString('pt-BR')} (Faltam ${diffDias} dia${diffDias > 1 ? 's' : ''})`, 
-                    badgeClass: 'bg-amber-50 text-amber-800 border-amber-200 font-semibold' 
-                };
+        async function processarAutenticacao(event) {
+            event.preventDefault();
+            const email = document.getElementById("authEmail").value.trim();
+            const password = document.getElementById("authPassword").value;
+            const btn = document.getElementById("authSubmit");
+            btn.disabled = true;
+            btn.textContent = modoAuth === "signup" ? "Criando conta..." : "Entrando...";
+            limparAuthMensagem();
+            try {
+                if (modoAuth === "signup") {
+                    const { data, error } = await supabaseClient.auth.signUp({ email, password });
+                    if (error) throw error;
+                    if (data.session) {
+                        mostrarAuthMensagem("Conta criada com sucesso.");
+                        await atualizarSessao(data.session);
+                    } else {
+                        mostrarAuthMensagem("Cadastro recebido! Confira seu e-mail para confirmar a conta e depois entre no sistema.");
+                    }
+                } else {
+                    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+                    if (error) throw error;
+                    await atualizarSessao(data.session);
+                }
+            } catch (error) {
+                mostrarAuthMensagem(traduzirErroAuth(error.message), true);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = modoAuth === "signup" ? "Criar conta" : "Entrar";
             }
         }
 
-        // Cadastrar Agendamento
-        document.getElementById("formBrinde").addEventListener("submit", async (e) => {
-            e.preventDefault();
+        function traduzirErroAuth(mensagem) {
+            const m = String(mensagem || "");
+            if (/Invalid login credentials/i.test(m)) return "E-mail ou senha incorretos.";
+            if (/User already registered/i.test(m)) return "Este e-mail já possui cadastro. Clique em Entrar.";
+            if (/Password should be at least/i.test(m)) return "A senha precisa ter pelo menos 6 caracteres.";
+            if (/Email not confirmed/i.test(m)) return "Confirme seu e-mail antes de entrar.";
+            if (/rate limit/i.test(m)) return "Muitas tentativas. Aguarde um pouco e tente novamente.";
+            return m;
+        }
 
-            const codigo = document.getElementById("codigo").value.trim(); // NF
-            const familia = document.getElementById("familia").value.trim(); // Fornecedor
-            const descricao = document.getElementById("descricao").value.trim(); // Descrição
-            const agendamento = document.getElementById("agendamento").value;
+        window.sair = async function() {
+            const { error } = await supabaseClient.auth.signOut();
+            if (error) alert("Não foi possível sair: " + error.message);
+            else {
+                usuarioAtual = null;
+                mostrarTelaAuth();
+                document.getElementById("authPassword").value = "";
+            }
+        };
 
+        function obterStatusAgendamento(brinde) {
+            if (brinde.concluido) return {
+                status: "concluido", texto: "Concluída / Recebida",
+                badgeClass: "bg-blue-50 text-blue-700 border-blue-200 font-semibold"
+            };
+            if (!brinde.agendamento) return {
+                status: "sem_agendamento", texto: "Não agendado",
+                badgeClass: "bg-gray-100 text-gray-600 border-gray-200"
+            };
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+            const dataAgendada = new Date(brinde.agendamento + "T00:00:00");
+            const diffDias = Math.round((dataAgendada - hoje) / (1000 * 60 * 60 * 24));
+            if (diffDias < 0) return {
+                status: "vencidos", texto: dataAgendada.toLocaleDateString("pt-BR") + " (Vencido)",
+                badgeClass: "bg-red-50 text-red-700 border-red-200 font-semibold"
+            };
+            if (diffDias === 0) return {
+                status: "hoje", texto: dataAgendada.toLocaleDateString("pt-BR") + " (Hoje)",
+                badgeClass: "bg-white text-gray-800 border-gray-300 shadow-sm font-bold"
+            };
+            return {
+                status: "futuros",
+                texto: `${dataAgendada.toLocaleDateString("pt-BR")} (Faltam ${diffDias} dia${diffDias > 1 ? "s" : ""})`,
+                badgeClass: "bg-amber-50 text-amber-800 border-amber-200 font-semibold"
+            };
+        }
+
+        function escaparHTML(valor) {
+            return String(valor ?? "").replace(/[&<>"']/g, caractere => ({
+                "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+            })[caractere]);
+        }
+
+        document.getElementById("formBrinde").addEventListener("submit", async event => {
+            event.preventDefault();
+            if (!usuarioAtual) return alert("Entre no sistema para salvar um agendamento.");
+            const registro = {
+                codigo: document.getElementById("codigo").value.trim(),
+                fornecedor: document.getElementById("familia").value.trim(),
+                descricao: document.getElementById("descricao").value.trim(),
+                agendamento: document.getElementById("agendamento").value,
+                concluido: false,
+                user_id: usuarioAtual.id
+            };
             try {
-                await db.brindes.add({
-                    codigo,
-                    familia,
-                    descricao,
-                    agendamento,
-                    concluido: false
-                });
+                const { error } = await supabaseClient.from("agendamentos_cargas").insert(registro);
+                if (error) throw error;
                 document.getElementById("formBrinde").reset();
-                carregarBrindes();
+                await carregarBrindes();
             } catch (error) {
-                alert("Erro ao salvar o agendamento: " + error);
+                alert("Erro ao salvar no Supabase: " + error.message);
             }
         });
 
-        // Carregar e filtrar agendamentos
         async function carregarBrindes() {
+            if (!usuarioAtual) return;
             const listaElement = document.getElementById("listaBrindes");
-            listaElement.innerHTML = "";
-
+            listaElement.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-xs text-gray-400">Carregando...</td></tr>';
             const buscaTexto = document.getElementById("busca").value.toLowerCase();
             const filtroStatus = document.getElementById("filtroStatus").value;
-
             try {
-                let brindes = await db.brindes.toArray();
-
+                const { data, error } = await supabaseClient
+                    .from("agendamentos_cargas")
+                    .select("id,codigo,fornecedor,descricao,agendamento,concluido,user_id")
+                    .eq("user_id", usuarioAtual.id)
+                    .order("agendamento", { ascending: true, nullsFirst: false });
+                if (error) throw error;
+                let brindes = (data || []).map(b => ({ ...b, familia: b.fornecedor }));
                 brindes = brindes.filter(b => {
                     const statusInfo = obterStatusAgendamento(b);
-
-                    const bateBusca = (b.codigo && b.codigo.toLowerCase().includes(buscaTexto)) ||
-                                      (b.familia && b.familia.toLowerCase().includes(buscaTexto)) ||
-                                      (b.descricao && b.descricao.toLowerCase().includes(buscaTexto));
-
-                    const bateStatus = (filtroStatus === 'todos') || (statusInfo.status === filtroStatus);
-
-                    return bateBusca && bateStatus;
+                    const bateBusca = (b.codigo || "").toLowerCase().includes(buscaTexto) ||
+                        (b.familia || "").toLowerCase().includes(buscaTexto) ||
+                        (b.descricao || "").toLowerCase().includes(buscaTexto);
+                    return bateBusca && (filtroStatus === "todos" || statusInfo.status === filtroStatus);
                 });
-
                 brindes.sort((a, b) => {
                     if (a.concluido !== b.concluido) return a.concluido ? 1 : -1;
                     if (!a.agendamento) return 1;
                     if (!b.agendamento) return -1;
                     return new Date(a.agendamento) - new Date(b.agendamento);
                 });
-
                 document.getElementById("totalBrindes").textContent = `${brindes.length} itens`;
-
                 if (brindes.length === 0) {
-                    listaElement.innerHTML = `
-                        <tr>
-                            <td colspan="5" class="py-6 text-center text-xs text-gray-400">Nenhum registo encontrado.</td>
-                        </tr>
-                    `;
+                    listaElement.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-xs text-gray-400">Nenhum registo encontrado.</td></tr>';
                     return;
                 }
-
+                listaElement.innerHTML = "";
                 brindes.forEach(brinde => {
                     const tr = document.createElement("tr");
                     tr.className = "hover:bg-gray-50 transition";
-                    
                     const statusInfo = obterStatusAgendamento(brinde);
-                    const dataFormatada = brinde.agendamento ? new Date(brinde.agendamento + 'T00:00:00').toLocaleDateString('pt-BR') : 'Sem data';
-
+                    const dataFormatada = brinde.agendamento ? new Date(brinde.agendamento + "T00:00:00").toLocaleDateString("pt-BR") : "Sem data";
                     tr.innerHTML = `
-                        <td class="py-3 font-medium text-gray-700">${dataFormatada}</td>
-                        <td class="py-3">
-                            <div class="font-bold text-gray-900 text-sm">${brinde.familia || ''}</div>
-                            <div class="text-xs text-gray-400 font-mono">NF: ${brinde.codigo || ''}</div>
-                        </td>
-                        <td class="py-3 text-gray-600 max-w-xs truncate" title="${brinde.descricao || ''}">
-                            ${brinde.descricao || ''}
-                        </td>
-                        <td class="py-3">
-                            <span class="inline-block px-2.5 py-1 text-xs rounded-full border ${statusInfo.badgeClass}">
-                                ${statusInfo.texto}
-                            </span>
-                        </td>
+                        <td class="py-3 font-medium text-gray-700">${escaparHTML(dataFormatada)}</td>
+                        <td class="py-3"><div class="font-bold text-gray-900 text-sm">${escaparHTML(brinde.familia)}</div><div class="text-xs text-gray-400 font-mono">NF: ${escaparHTML(brinde.codigo)}</div></td>
+                        <td class="py-3 text-gray-600 max-w-xs truncate" title="${escaparHTML(brinde.descricao)}">${escaparHTML(brinde.descricao)}</td>
+                        <td class="py-3"><span class="inline-block px-2.5 py-1 text-xs rounded-full border ${statusInfo.badgeClass}">${escaparHTML(statusInfo.texto)}</span></td>
                         <td class="py-3 text-right space-x-1">
-                            <button type="button" onclick="alternarConcluido(${brinde.id}, ${!brinde.concluido})" class="text-xs px-2.5 py-1.5 rounded-md font-medium transition ${brinde.concluido ? 'bg-gray-100 text-gray-700 hover:bg-gray-200' : 'bg-blue-50 text-blue-700 hover:bg-blue-100'}" title="Marcar como Concluída/Recebida">
-                                ${brinde.concluido ? '↩️ Reabrir' : '✔️ Concluir'}
-                            </button>
-                            <button type="button" onclick="abrirModalAgendamento(${brinde.id})" class="text-gray-600 hover:text-blue-800 font-medium text-xs bg-gray-50 hover:bg-gray-100 p-1.5 rounded-md transition" title="Editar Registo">
-                                ✏️
-                            </button>
-                            <button type="button" onclick="deletarBrinde(${brinde.id})" class="text-red-600 hover:text-red-800 font-medium text-xs bg-red-50 hover:bg-red-100 p-1.5 rounded-md transition" title="Excluir">
-                                🗑️
-                            </button>
-                        </td>
-                    `;
+                            <button type="button" onclick="alternarConcluido('${brinde.id}', ${!brinde.concluido})" class="text-xs px-2.5 py-1.5 rounded-md font-medium transition ${brinde.concluido ? "bg-gray-100 text-gray-700 hover:bg-gray-200" : "bg-blue-50 text-blue-700 hover:bg-blue-100"}" title="Marcar como Concluída/Recebida">${brinde.concluido ? "↩️ Reabrir" : "✔️ Concluir"}</button>
+                            <button type="button" onclick="abrirModalAgendamento('${brinde.id}')" class="text-gray-600 hover:text-blue-800 font-medium text-xs bg-gray-50 hover:bg-gray-100 p-1.5 rounded-md transition" title="Editar Registo">✏️</button>
+                            <button type="button" onclick="deletarBrinde('${brinde.id}')" class="text-red-600 hover:text-red-800 font-medium text-xs bg-red-50 hover:bg-red-100 p-1.5 rounded-md transition" title="Excluir">🗑️</button>
+                        </td>`;
                     listaElement.appendChild(tr);
                 });
             } catch (error) {
-                console.error("Erro ao carregar os dados:", error);
+                console.error("Erro ao carregar dados do Supabase:", error);
+                listaElement.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-sm text-red-600">Erro ao carregar dados: ${escaparHTML(error.message)}</td></tr>`;
             }
         }
 
-        // Alternar status de concluído/recebido
         window.alternarConcluido = async function(id, status) {
             try {
-                await db.brindes.update(Number(id), { concluido: status });
-                carregarBrindes();
+                const { error } = await supabaseClient.from("agendamentos_cargas")
+                    .update({ concluido: status, updated_at: new Date().toISOString() })
+                    .eq("id", id).eq("user_id", usuarioAtual.id);
+                if (error) throw error;
+                await carregarBrindes();
             } catch (error) {
-                console.error("Erro ao atualizar status:", error);
-                alert("Erro ao alterar o status da carga.");
+                alert("Erro ao alterar o status da carga: " + error.message);
             }
         };
 
-        // Funções globais de modal para edição completa
         window.abrirModalAgendamento = async function(id) {
-            const brinde = await db.brindes.get(Number(id));
-            if (brinde) {
-                document.getElementById("editBrindeId").value = Number(brinde.id);
-                document.getElementById("editCodigo").value = brinde.codigo || "";
-                document.getElementById("editFamilia").value = brinde.familia || "";
-                document.getElementById("editDescricao").value = brinde.descricao || "";
-                document.getElementById("editAgendamento").value = brinde.agendamento || "";
-                document.getElementById("modalAgendamento").classList.remove("hidden");
+            try {
+                const { data, error } = await supabaseClient.from("agendamentos_cargas")
+                    .select("*").eq("id", id).eq("user_id", usuarioAtual.id).single();
+                if (error) throw error;
+                if (data) {
+                    document.getElementById("editBrindeId").value = data.id;
+                    document.getElementById("editCodigo").value = data.codigo || "";
+                    document.getElementById("editFamilia").value = data.fornecedor || "";
+                    document.getElementById("editDescricao").value = data.descricao || "";
+                    document.getElementById("editAgendamento").value = data.agendamento || "";
+                    document.getElementById("modalAgendamento").classList.remove("hidden");
+                }
+            } catch (error) {
+                alert("Erro ao abrir o registro: " + error.message);
             }
         };
 
@@ -341,112 +454,109 @@
             document.getElementById("modalAgendamento").classList.add("hidden");
         };
 
-        window.salvarEdicaoRegisto = async function(e) {
-            if (e) e.preventDefault();
-
-            const id = Number(document.getElementById("editBrindeId").value);
-            const codigo = document.getElementById("editCodigo").value.trim();
-            const familia = document.getElementById("editFamilia").value.trim();
-            const descricao = document.getElementById("editDescricao").value.trim();
-            const agendamento = document.getElementById("editAgendamento").value;
-
-            if (!id) {
-                alert("Erro ao identificar o registo.");
-                return;
-            }
-
+        window.salvarEdicaoRegisto = async function(event) {
+            if (event) event.preventDefault();
+            const id = document.getElementById("editBrindeId").value;
+            const atualizacao = {
+                codigo: document.getElementById("editCodigo").value.trim(),
+                fornecedor: document.getElementById("editFamilia").value.trim(),
+                descricao: document.getElementById("editDescricao").value.trim(),
+                agendamento: document.getElementById("editAgendamento").value,
+                updated_at: new Date().toISOString()
+            };
             try {
-                await db.brindes.update(id, {
-                    codigo,
-                    familia,
-                    descricao,
-                    agendamento
-                });
+                const { error } = await supabaseClient.from("agendamentos_cargas").update(atualizacao)
+                    .eq("id", id).eq("user_id", usuarioAtual.id);
+                if (error) throw error;
                 fecharModalAgendamento();
-                carregarBrindes();
+                await carregarBrindes();
             } catch (error) {
-                console.error("Erro ao atualizar o registo:", error);
-                alert("Ocorreu um erro ao guardar as alterações.");
+                alert("Erro ao salvar as alterações: " + error.message);
             }
         };
 
         window.deletarBrinde = async function(id) {
-            if (confirm("Tem certeza que deseja remover este registo?")) {
-                await db.brindes.delete(Number(id));
-                carregarBrindes();
+            if (!confirm("Tem certeza que deseja remover este registo?")) return;
+            try {
+                const { error } = await supabaseClient.from("agendamentos_cargas").delete()
+                    .eq("id", id).eq("user_id", usuarioAtual.id);
+                if (error) throw error;
+                await carregarBrindes();
+            } catch (error) {
+                alert("Erro ao excluir registro: " + error.message);
             }
         };
 
         window.exportarCSV = async function() {
-            const brindes = await db.brindes.toArray();
-            if (brindes.length === 0) {
-                alert("Nenhum dado para exportar.");
-                return;
+            try {
+                const { data, error } = await supabaseClient.from("agendamentos_cargas")
+                    .select("agendamento,codigo,fornecedor,descricao,concluido")
+                    .eq("user_id", usuarioAtual.id).order("agendamento");
+                if (error) throw error;
+                if (!data || data.length === 0) return alert("Nenhum dado para exportar.");
+                const csvEsc = valor => '"' + String(valor ?? "").replace(/"/g, '""') + '"';
+                let csvContent = "\uFEFFAgendamento,NF,Fornecedor,Descricao,Status\n";
+                data.forEach(b => {
+                    csvContent += [b.agendamento, b.codigo, b.fornecedor, b.descricao, b.concluido ? "Concluido" : "Pendente"].map(csvEsc).join(",") + "\n";
+                });
+                const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = "notas_fiscais_adimax.csv";
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                URL.revokeObjectURL(url);
+            } catch (error) {
+                alert("Erro ao exportar dados: " + error.message);
             }
-
-            let csvContent = "\uFEFFAgendamento,NF,Fornecedor,Descricao,Status\n";
-
-            brindes.forEach(b => {
-                const agendamento = `"${b.agendamento || ''}"`;
-                const codigo = `"${(b.codigo || '').replace(/"/g, '""')}"`;
-                const fornecedor = `"${(b.familia || '').replace(/"/g, '""')}"`;
-                const descricao = `"${(b.descricao || '').replace(/"/g, '""')}"`;
-                const status = b.concluido ? "Concluido" : "Pendente";
-
-                csvContent += `${agendamento},${codigo},${fornecedor},${descricao},${status}\n`;
-            });
-
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.setAttribute("href", url);
-            link.setAttribute("download", "notas_fiscais_adimax.csv");
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
         };
 
-        window.importarCSV = function(event) {
-            const file = event.target.files[0];
+        window.importarCSV = async function(event) {
+            const file = event.target.files?.[0];
             if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = async function(e) {
-                const conteudo = e.target.result;
-                const linhas = conteudo.split(/\r\n|\n/);
-                if (linhas.length <= 1) {
-                    alert("O arquivo CSV está vazio.");
-                    return;
-                }
-
-                let inseridos = 0;
-
-                for (let i = 1; i < linhas.length; i++) {
-                    const linha = linhas[i].trim();
-                    if (!linha) continue;
-
-                    const colunas = linha.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || linha.split(",");
-                    const colunasLimpas = colunas.map(col => col.replace(/^"|"$/g, '').trim());
-
-                    if (colunasLimpas.length >= 4) {
-                        await db.brindes.add({
-                            agendamento: colunasLimpas[0] || "",
-                            codigo: colunasLimpas[1] || "",
-                            familia: colunasLimpas[2] || "",
-                            descricao: colunasLimpas[3] || "",
-                            concluido: colunasLimpas[4] === "Concluido"
-                        });
-                        inseridos++;
+            try {
+                const conteudo = await file.text();
+                const linhas = conteudo.replace(/^\uFEFF/, "").split(/\r\n|\n/).filter(l => l.trim());
+                if (linhas.length <= 1) throw new Error("O arquivo CSV está vazio.");
+                const parseLinha = linha => {
+                    const colunas = [];
+                    let atual = "", dentroAspas = false;
+                    for (let i = 0; i < linha.length; i++) {
+                        const c = linha[i];
+                        if (c === '"' && dentroAspas && linha[i + 1] === '"') { atual += '"'; i++; }
+                        else if (c === '"') dentroAspas = !dentroAspas;
+                        else if (c === "," && !dentroAspas) { colunas.push(atual); atual = ""; }
+                        else atual += c;
                     }
+                    colunas.push(atual);
+                    return colunas.map(c => c.trim());
+                };
+                const registros = [];
+                for (let i = 1; i < linhas.length; i++) {
+                    const c = parseLinha(linhas[i]);
+                    if (c.length >= 4) registros.push({
+                        agendamento: c[0] || null,
+                        codigo: c[1] || "",
+                        fornecedor: c[2] || "",
+                        descricao: c[3] || "",
+                        concluido: (c[4] || "").toLowerCase() === "concluido",
+                        user_id: usuarioAtual.id
+                    });
                 }
-
-                alert(`${inseridos} registo(s) importado(s) com sucesso!`);
-                carregarBrindes();
+                if (!registros.length) throw new Error("Nenhum registro válido foi encontrado no CSV.");
+                const { error } = await supabaseClient.from("agendamentos_cargas").insert(registros);
+                if (error) throw error;
+                alert(`${registros.length} registro(s) importado(s) para o Supabase com sucesso!`);
+                await carregarBrindes();
+            } catch (error) {
+                alert("Erro ao importar CSV: " + error.message);
+            } finally {
                 document.getElementById("importarCsv").value = "";
-            };
-
-            reader.readAsText(file, 'UTF-8');
+            }
         };
     </script>
+
 </body>
 </html>
