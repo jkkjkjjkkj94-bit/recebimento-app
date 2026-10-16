@@ -277,6 +277,7 @@
                 submit.textContent = modoCadastro ? "Criar conta" : "Entrar";
             }
         });
+        window.__adimaxAuthReady = true;
         document.getElementById("resendConfirmation").addEventListener("click", async () => {
             const email = document.getElementById("authEmail").value.trim();
             if (!email) {
@@ -684,5 +685,115 @@
             }
         };
     </script>
+
+    <!-- Fallback independente: mantém o cadastro funcional se o script principal falhar ao iniciar. -->
+    <script>
+    (() => {
+        if (window.__adimaxAuthReady) return;
+        const form = document.getElementById("authForm");
+        const submit = document.getElementById("authSubmit");
+        const message = document.getElementById("authMessage");
+        const toggle = document.getElementById("toggleAuthMode");
+        const title = document.getElementById("authTitle");
+        const subtitle = document.getElementById("authSubtitle");
+        const password = document.getElementById("authPassword");
+        const resend = document.getElementById("resendConfirmation");
+        let signupMode = false;
+        const say = (text, error = false) => {
+            message.textContent = text;
+            message.classList.remove("hidden", "text-red-600", "text-green-700");
+            message.classList.add(error ? "text-red-600" : "text-green-700");
+        };
+        const translate = (err) => {
+            const code = err && err.code;
+            const msg = err && err.message;
+            const known = {
+                user_already_exists: "Este e-mail já possui uma conta. Entre ou recupere a senha.",
+                email_address_invalid: "O formato do e-mail é inválido.",
+                weak_password: "A senha não atende aos requisitos de segurança.",
+                over_email_send_rate_limit: "Muitos e-mails foram solicitados. Aguarde e tente novamente.",
+                email_not_confirmed: "Confirme seu e-mail antes de entrar.",
+                invalid_credentials: "E-mail ou senha incorretos."
+            };
+            return known[code] || msg || "Não foi possível concluir a operação. Tente novamente.";
+        };
+        if (!window.supabase || typeof window.supabase.createClient !== "function") {
+            say("A conexão com o serviço de autenticação não carregou. Atualize com Ctrl + F5 e tente novamente.", true);
+            return;
+        }
+        const client = window.supabase.createClient(
+            "https://innziuzgtpfsiywqmies.supabase.co",
+            "sb_publishable_fJB7zijdznI9ob9l9jSGlQ_6oU_J-d1",
+            { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }
+        );
+        toggle.addEventListener("click", () => {
+            signupMode = !signupMode;
+            title.textContent = signupMode ? "Criar conta" : "Entrar no sistema";
+            subtitle.textContent = signupMode ? "Crie seu acesso para salvar os agendamentos na nuvem." : "Acesse suas notas fiscais e agendamentos salvos na nuvem.";
+            submit.textContent = signupMode ? "Criar conta" : "Entrar";
+            toggle.textContent = signupMode ? "Já tenho uma conta" : "Criar uma conta";
+            password.autocomplete = signupMode ? "new-password" : "current-password";
+            message.classList.add("hidden");
+        });
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const email = document.getElementById("authEmail").value.trim();
+            const pass = password.value;
+            submit.disabled = true;
+            submit.textContent = signupMode ? "Criando conta..." : "Entrando...";
+            say(signupMode ? "Enviando solicitação de cadastro..." : "Verificando seus dados...");
+            try {
+                let result;
+                if (signupMode) {
+                    result = await client.auth.signUp({
+                        email, password: pass,
+                        options: { emailRedirectTo: "https://jkkjkjjkkj94-bit.github.io/recebimento-app/" }
+                    });
+                    if (result.error) throw result.error;
+                    if (result.data && result.data.session) {
+                        say("Conta criada com sucesso. Atualize a página se não entrar automaticamente.");
+                    } else {
+                        say("Solicitação enviada. Se a confirmação por e-mail estiver ativada, abra o e-mail recebido para confirmar a conta.");
+                        resend.classList.remove("hidden");
+                    }
+                } else {
+                    result = await client.auth.signInWithPassword({ email, password: pass });
+                    if (result.error) throw result.error;
+                    say("Login realizado. Atualizando a página...");
+                    window.location.reload();
+                }
+            } catch (err) {
+                say(translate(err), true);
+                console.error("Falha de autenticação ADIMAX:", err);
+            } finally {
+                submit.disabled = false;
+                submit.textContent = signupMode ? "Criar conta" : "Entrar";
+            }
+        });
+        resend.addEventListener("click", async () => {
+            const email = document.getElementById("authEmail").value.trim();
+            if (!email) return say("Digite seu e-mail antes de reenviar.", true);
+            resend.disabled = true;
+            try {
+                const { error } = await client.auth.resend({
+                    type: "signup", email,
+                    options: { emailRedirectTo: "https://jkkjkjjkkj94-bit.github.io/recebimento-app/" }
+                });
+                if (error) throw error;
+                say("Se o cadastro existir e precisar de confirmação, um novo e-mail será enviado.");
+            } catch (err) {
+                say(translate(err), true);
+            } finally {
+                resend.disabled = false;
+            }
+        });
+        window.addEventListener("error", (event) => {
+            if (!message.textContent.trim()) say("Erro ao iniciar o sistema. Atualize a página com Ctrl + F5.", true);
+            console.error("Erro JavaScript ADIMAX:", event.message);
+        });
+        console.warn("Modo de autenticação alternativo ativado.");
+    })();
+    </script>
+
 </body>
 </html>
