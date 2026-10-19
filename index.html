@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Cache-Control" content="no-cache">
-<title>ADIMAX • Agendamentos</title>
+<title>AGENDAMENTO PROMOCIONAIS</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{--bg:#f4f6fb;--card:#fff;--ink:#172033;--muted:#697386;--line:#e7eaf1;--p:#4f46e5;--green:#0f9f6e;--red:#dc2626;--shadow:0 12px 32px #1b274f12}
@@ -114,22 +114,54 @@ button:active{transform:translateY(1px)}
 @media(max-width:850px){.layout{grid-template-columns:1fr}.panel{padding:16px}}
 @media(max-width:560px){header{padding:15px}.stats{gap:7px}.stat{padding:11px 9px}.panel{padding:13px}.appointment{grid-template-columns:52px minmax(0,1fr)}.itemactions{grid-column:2}.splash-logo{width:88px;height:88px;font-size:44px}}
 
+
+/* Paleta final: branco, preto e laranja — AGENDAMENTO PROMOCIONAIS */
+:root{--bg:#f5f5f5;--card:#fff;--ink:#171717;--muted:#666;--line:#e5e5e5;--p:#f28c00;--green:#16803c;--red:#c62828;--shadow:0 4px 16px #0000000a}
+body{background:#f5f5f5;color:#171717}
+header{background:#111;color:#fff;border-bottom:4px solid #f28c00}
+.logo{background:#f28c00;color:#111;border-radius:9px;box-shadow:none;font-size:15px}
+.brand h1{font-size:clamp(15px,2vw,20px);letter-spacing:.4px;font-weight:900}
+.brand p{color:#e5e5e5}
+#connection{color:#ffb74d}
+.stat,.panel{background:#fff;border:1px solid #e5e5e5;border-radius:10px;box-shadow:0 4px 16px #00000008}
+.stat{border-top:3px solid #f28c00}
+.num{color:#111}
+.primary{background:#f28c00;color:#111}.primary:hover{background:#df7e00}
+.secondary{background:#fff0dc;color:#663800;border:1px solid #f5d5a6}
+.ghost{background:#f0f0f0;color:#222}
+.appointment{background:#fff;border-color:#e5e5e5}
+.appointment:hover{border-color:#f28c00}
+.datebox{background:#fff0dc;color:#7a4000}
+.scheduled{background:#fff0dc;color:#7a4000}
+.done{background:#e7f6eb;color:#176534}
+.cancelled{background:#ffeded;color:#a51e1e}
+.notice{background:#fff;border:1px solid #e5e5e5;border-left:3px solid #f28c00}
+#splashScreen{background:#f28c00;color:#111}
+.splash-logo{background:#111;color:#f28c00;border:0;border-radius:12px;font-size:30px;font-weight:950;width:88px;height:88px}
+.splash-eyebrow{color:#111;letter-spacing:2px}
+.splash-content h2,.splash-content h2 span{color:#111;letter-spacing:0}
+.splash-subtitle{color:#292015}
+.splash-enter{background:#111;color:#fff;border:2px solid #111;border-radius:8px;box-shadow:none}
+#splashScreen:hover .splash-enter{background:#292929}
+.splash-foot{color:#33200a}
+@media(max-width:560px){.brand h1{max-width:230px;line-height:1.2}.splash-content h2{font-size:clamp(30px,8vw,46px)}}
+
 </style></head>
 <body>
 
 <div id="splashScreen" role="button" tabindex="0" aria-label="Clique para entrar no sistema ADIMAX">
   <div class="splash-orb one"></div><div class="splash-orb two"></div>
   <div class="splash-content">
-    <div class="splash-logo" aria-label="Símbolo Instituto ADIMAX">🙏</div>
-    <div class="splash-eyebrow">Instituto</div>
-    <h2>Bem-vindo ao<br><span>Instituto ADIMAX</span></h2>
+    <div class="splash-logo" aria-label="Logotipo Agendamento Promocionais">🙏</div>
+    <div class="splash-eyebrow">GESTÃO DE AGENDAMENTOS</div>
+    <h2>AGENDAMENTO<br><span>PROMOCIONAIS</span></h2>
     <p class="splash-subtitle">Agendamento de recebimentos e cargas.<br>Organização, cuidado e praticidade em um só lugar.</p>
     <button class="splash-enter" id="splashEnter" type="button">Clique para acessar os agendamentos <span class="arrow">→</span></button>
-    <div class="splash-foot">GESTÃO DE RECEBIMENTOS • INSTITUTO ADIMAX</div>
+    <div class="splash-foot">AGENDAMENTO PROMOCIONAIS</div>
   </div>
 </div>
 
-<header><div class="brand"><div class="logo">A</div><div><h1>ADIMAX</h1><p>Agendamento de recebimentos e cargas</p></div></div><div><div id="connection">Conectando ao banco...</div><div id="todayLabel" class="today" style="font-size:12px;color:#d9def0;margin-top:4px"></div></div></header>
+<header><div class="brand"><div class="logo">AP</div><div><h1>AGENDAMENTO PROMOCIONAIS</h1><p>Gestão de agendamentos e recebimentos</p></div></div><div><div id="connection">Conectando ao banco...</div><div id="todayLabel" class="today" style="font-size:12px;color:#d9def0;margin-top:4px"></div></div></header>
 <main>
 <section class="stats"><div class="stat"><div class="label">Agendamentos no total</div><div class="num" id="totalCount">0</div></div><div class="stat"><div class="label">Para hoje</div><div class="num" id="todayCount">0</div></div><div class="stat"><div class="label">Concluídos</div><div class="num" id="doneCount">0</div></div></section>
 <div class="layout"><section class="panel"><div class="panelhead"><div><h2 id="formTitle">Novo agendamento</h2><div class="hint">Preencha os dados abaixo</div></div><span>✦</span></div>
