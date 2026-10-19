@@ -1,15 +1,15 @@
 (() => {
   'use strict';
   const cfg = window.APP_CONFIG || {};
-  if (!window.supabase || !cfg.SUPABASE_URL || !cfg.SUPABASE_KEY || !cfg.TABLE || !cfg.SHARED_USER_ID) return;
+  if (!window.supabase || !cfg.TABLE || !cfg.SHARED_USER_ID) return;
 
-  const db = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_KEY, {
-    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
-  });
   let syncing = false;
+  const getDb = () => window.APP_SUPABASE || null;
 
   async function syncManagementData() {
     if (syncing) return;
+    const db = getDb();
+    if (!db) return;
     syncing = true;
     try {
       const { data: sessionData, error: sessionError } = await db.auth.getSession();
@@ -46,17 +46,8 @@
   }
 
   window.syncManagementData = syncManagementData;
-
-  db.auth.onAuthStateChange((_event, session) => {
-    if (session?.user) setTimeout(syncManagementData, 0);
-    else {
-      window.__agendamentoRecords = [];
-      window.dispatchEvent(new Event('agendamento-records'));
-    }
-  });
-
-  window.addEventListener('auth-ready', syncManagementData);
+  window.addEventListener('app-auth-ready', () => setTimeout(syncManagementData, 0));
   window.addEventListener('focus', syncManagementData);
-  setTimeout(syncManagementData, 300);
+  setTimeout(syncManagementData, 500);
   setInterval(syncManagementData, 15000);
 })();
