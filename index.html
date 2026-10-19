@@ -23,6 +23,21 @@
     </div>
   </div>
 
+  <aside class="sidebar" id="sidebar" aria-label="Navegação lateral">
+    <button class="sidebar-toggle" id="sidebarToggle" type="button" aria-label="Recolher ou expandir menu">☰</button>
+    <div class="sidebar-brand"><img src="./logo-agendamento.svg" alt=""><span>ADIMAX</span></div>
+    <nav class="sidebar-nav">
+      <button type="button" class="side-link active" data-view="agenda" title="Agenda"><span class="side-icon">▦</span><span class="side-label">Agenda</span></button>
+      <button type="button" class="side-link" data-view="overview" title="Visão geral"><span class="side-icon">★</span><span class="side-label">Visão geral</span></button>
+      <button type="button" class="side-link" data-view="suppliers" title="Fornecedores"><span class="side-icon">◆</span><span class="side-label">Fornecedores</span></button>
+      <div class="side-separator"></div>
+      <button type="button" class="side-link" data-action="new" title="Novo agendamento"><span class="side-icon">＋</span><span class="side-label">Novo agendamento</span></button>
+      <button type="button" class="side-link" data-action="search" title="Pesquisar"><span class="side-icon">⌕</span><span class="side-label">Pesquisar</span></button>
+      <button type="button" class="side-link" data-action="export" title="Exportar"><span class="side-icon">⇩</span><span class="side-label">Exportar CSV</span></button>
+    </nav>
+  </aside>
+
+  <div class="app-shell">
   <header>
     <div class="brand"><div class="logo"><img src="./logo-agendamento.svg" alt="Logo Agendamento Promocionais"></div><div><h1>AGENDAMENTO PROMOCIONAIS</h1><p>Gestão de agendamentos e recebimentos</p></div></div>
     <div><div id="connection">Conectando ao banco...</div><div id="todayLabel" class="today" style="font-size:12px;color:#d9def0;margin-top:4px"></div></div>
@@ -70,11 +85,13 @@
       <div id="supplierList" class="list" style="margin-top:14px"><div class="empty">Carregando fornecedores...</div></div>
     </section>
   </main>
+  </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="./supabase-config.js"></script>
   <script src="./app.js"></script>
   <script src="./fornecedor-pesquisa.js"></script>
   <script src="./splash.js"></script>
+  <script src="./sidebar.js"></script>
 </body>
 </html>
