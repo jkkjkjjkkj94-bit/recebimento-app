@@ -246,8 +246,8 @@ input:focus,textarea:focus,select:focus{border-color:#3b82f6;box-shadow:0 0 0 3p
 <div class="actions" style="margin:0 0 14px"><button type="button" class="ghost small" id="clearOverviewFilters">Limpar filtros</button><span id="overviewCount" class="overview-count" style="align-self:center">0 registros</span></div>
 <div class="overview-table-wrap"><table class="overview-table"><thead><tr><th>Data</th><th>Fornecedor</th><th>Descrição da carga</th><th>Turno recebido</th><th>Status</th><th>Responsável</th></tr></thead><tbody id="overviewRows"><tr><td colspan="6">Carregando dados...</td></tr></tbody></table></div>
 </section><section id="suppliersView" class="panel overview-panel hidden"><div class="panelhead"><div><h2>Cadastro de fornecedores</h2><div class="hint">Adicione os fornecedores que aparecerão na escolha do agendamento.</div></div></div><form id="supplierForm"><label for="newSupplier">Nome do fornecedor</label><div class="grid2"><input id="newSupplier" maxlength="140" placeholder="Digite o nome do fornecedor" required><button class="primary" id="addSupplierBtn" type="submit">＋ Adicionar</button></div></form><div class="notice">Os fornecedores são salvos no banco de dados e ficam disponíveis para todos que usam este sistema.</div><div id="supplierList" class="list" style="margin-top:14px"><div class="empty">Carregando fornecedores...</div></div></section></main><div class="toast" id="toast" role="status" aria-live="polite"></div>
-<script>
  <script src="./supabase-config.js"></script>
+ <script>
 (() => {
 const $=id=>document.getElementById(id);
 const {
