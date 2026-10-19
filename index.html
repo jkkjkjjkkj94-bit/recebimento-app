@@ -249,10 +249,12 @@ input:focus,textarea:focus,select:focus{border-color:#3b82f6;box-shadow:0 0 0 3p
 <script>
 (() => {
 const $=id=>document.getElementById(id);
-const SUPABASE_URL='https://innziuzgtpfsiywqmies.supabase.co';
-const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlubnppdXpndHBmc2l5d3FtaWVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE1NjIwNDksImV4cCI6MjEwNzEzODA0OX0.imcZeRFOzWmFTiH9ryfkwbdnPrIZ0bv41U_JG0K5vVY';
-const TABLE='agendamentos_cargas';
-const SHARED_USER_ID='00000000-0000-4000-8000-000000000001';
+const {
+  SUPABASE_URL,
+  SUPABASE_KEY,
+  TABLE,
+  SHARED_USER_ID
+} = window.APP_CONFIG;
 let client=null,records=[],suppliers=[];
 const now=new Date(),todayISO=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
 $('date').value=todayISO;$('ovMonth').value=todayISO.slice(0,7);$('todayLabel').textContent=now.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
