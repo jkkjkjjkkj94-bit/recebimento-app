@@ -172,7 +172,9 @@
             throw new Error("Supabase JS CDN não carregou.");
         }
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-            auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+            auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+            // Evita que tentativas automáticas de rede deixem o formulário preso em "Salvando...".
+            db: { retry: false }
         });
         // O IndexedDB antigo é opcional; sua falha não deve bloquear login/cadastro na nuvem.
         let db = null;
@@ -213,11 +215,12 @@
             return (data || []).map(b => ({...b, familia: b.fornecedor, id: b.id}));
         }
         async function inserirAgendamento(brinde) {
-            const { error } = await supabase.from("agendamentos_cargas").insert({
+            const { data, error } = await supabase.from("agendamentos_cargas").insert({
                 user_id: usuarioAtual.id, codigo: brinde.codigo, fornecedor: brinde.familia,
                 descricao: brinde.descricao, agendamento: brinde.agendamento, concluido: !!brinde.concluido
-            });
+            }).select("id").single();
             if (error) throw error;
+            if (!data?.id) throw new Error("O banco não confirmou a gravação do agendamento.");
         }
         async function atualizarAgendamento(id, campos) {
             const update = {};
