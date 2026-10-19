@@ -32,18 +32,48 @@ label{display:block;font-size:13px;font-weight:650;margin:12px 0 6px}input,texta
 @keyframes splash-rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
 @media(prefers-reduced-motion:reduce){.splash-content{animation:none}#splashScreen{transition:none}}
 
+
+/* Identidade visual Instituto ADIMAX — laranja, preto e branco */
+:root{--bg:#fff8eb;--card:#ffffff;--ink:#171717;--muted:#66615a;--line:#f0dfc2;--p:#f59e0b;--green:#15803d;--red:#dc2626;--shadow:0 12px 32px #7c4a1012}
+body{background:linear-gradient(180deg,#fff3d9 0,#fffaf1 280px,#fffaf7 100%);color:var(--ink)}
+header{background:#151515;color:#fff;border-bottom:5px solid #f59e0b}
+.logo{background:#f59e0b;color:#111;box-shadow:0 5px 18px #f59e0b35}
+.brand h1{letter-spacing:1.5px;font-weight:950}
+.brand p{color:#f6d9a1}
+#connection{color:#fde68a}
+.stat,.panel{border-color:#f1e2c8;box-shadow:0 10px 28px #5b34100a}
+.stat{border-top:3px solid #f59e0b}
+input:focus,textarea:focus,select:focus{border-color:#f59e0b;box-shadow:0 0 0 3px #fef3c7}
+.primary{background:#f59e0b;color:#171717}.primary:hover{background:#e99000}
+.secondary{background:#fff0cc;color:#7c3f00}.ghost{background:#f7f3ec;color:#3b342a}
+.danger{background:#fff0ed;color:#b91c1c}
+.appointment{border-color:#f0e4d0}.datebox{background:#fff0c2;color:#8a4300}
+.scheduled{background:#fff0cc;color:#884400}.done{background:#dcfce7;color:#166534}
+.cancelled{background:#fee2e2;color:#b91c1c}
+.notice{background:#fff8e8;border:1px solid #f5e3bd}
+#splashScreen{background:radial-gradient(ellipse at 50% 25%,#ffbd37 0%,#ffa500 55%,#f29300 100%);color:#080808}
+.splash-logo{background:transparent;border:4px solid #080808;border-radius:50%;width:112px;height:112px;color:#080808;box-shadow:none;font-size:56px;letter-spacing:0}
+.splash-eyebrow{color:#151515;letter-spacing:5px;font-weight:900}
+.splash-content h2{color:#080808;text-transform:uppercase;letter-spacing:2px;font-style:italic}
+.splash-content h2 span{color:#080808;font-weight:950;letter-spacing:1px}
+.splash-subtitle{color:#21180b;font-weight:500}
+.splash-enter{background:#111;color:#fff;border:2px solid #111;box-shadow:0 10px 25px #4c2d0026}
+#splashScreen:hover .splash-enter{background:#292929}
+.splash-foot{color:#392708;font-weight:800}
+.splash-orb{border-color:#17171712}
+
 </style></head>
 <body>
 
 <div id="splashScreen" role="button" tabindex="0" aria-label="Clique para entrar no sistema ADIMAX">
   <div class="splash-orb one"></div><div class="splash-orb two"></div>
   <div class="splash-content">
-    <div class="splash-logo">A</div>
-    <div class="splash-eyebrow">Sistema de logística</div>
-    <h2>Bem-vindo à<br><span>ADIMAX</span></h2>
-    <p class="splash-subtitle">Agendamento de recebimentos e cargas.<br>Organização, controle e praticidade em um só lugar.</p>
+    <div class="splash-logo" aria-label="Símbolo Instituto ADIMAX">🙏</div>
+    <div class="splash-eyebrow">Instituto</div>
+    <h2>Bem-vindo ao<br><span>Instituto ADIMAX</span></h2>
+    <p class="splash-subtitle">Agendamento de recebimentos e cargas.<br>Organização, cuidado e praticidade em um só lugar.</p>
     <button class="splash-enter" id="splashEnter" type="button">Clique para acessar os agendamentos <span class="arrow">→</span></button>
-    <div class="splash-foot">GESTÃO DE RECEBIMENTOS • ADIMAX</div>
+    <div class="splash-foot">GESTÃO DE RECEBIMENTOS • INSTITUTO ADIMAX</div>
   </div>
 </div>
 
