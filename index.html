@@ -1,350 +1,80 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="Cache-Control" content="no-cache">
-<link rel="icon" type="image/svg+xml" href="./logo-agendamento.svg">
-<meta name="theme-color" content="#142544">
-<title>AGENDAMENTO PROMOCIONAIS</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-:root{--bg:#f4f6fb;--card:#fff;--ink:#172033;--muted:#697386;--line:#e7eaf1;--p:#4f46e5;--green:#0f9f6e;--red:#dc2626;--shadow:0 12px 32px #1b274f12}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial}
-header{background:#111a32;color:white;padding:22px max(18px,calc((100% - 1180px)/2));display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}.brand{display:flex;align-items:center;gap:12px}.logo{width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,#818cf8,#4f46e5);display:grid;place-items:center;font-weight:900;font-size:20px}.brand h1{margin:0;font-size:21px}.brand p{margin:3px 0 0;color:#c6cde0;font-size:13px}#connection{font-size:12px;color:#c7f9df}
-main{max-width:1180px;margin:25px auto;padding:0 18px 40px}.viewnav{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}.viewnav button{border:1px solid #dfe7f2;background:#fff;color:#334155}.viewnav button.active{background:#142544;color:#fff;border-color:#142544}.overview-panel{margin-bottom:18px}.month-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:14px 0}.month-card{border:1px solid #dfe7f2;border-top:3px solid #2563eb;border-radius:12px;padding:14px;background:#f8fbff}.month-card span{display:block;color:#64748b;font-size:12px}.month-card strong{display:block;font-size:26px;color:#142544;margin-top:4px}.overview-filters{display:grid;grid-template-columns:repeat(7,minmax(120px,1fr));gap:10px;margin:14px 0}.overview-table-wrap{overflow:auto;border:1px solid var(--line);border-radius:10px}.overview-table{width:100%;border-collapse:collapse;min-width:900px;background:#fff;font-size:13px}.overview-table th,.overview-table td{padding:11px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}.overview-table th{background:#f1f5fb;color:#334155;position:sticky;top:0}.overview-table tr:last-child td{border-bottom:0}.overview-count{font-size:13px;color:var(--muted)}@media(max-width:900px){.overview-filters{grid-template-columns:repeat(3,minmax(0,1fr))}.month-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:560px){.overview-filters{grid-template-columns:1fr 1fr}.month-card{padding:10px}.month-card strong{font-size:22px}}.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin-bottom:18px}.stat,.panel{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}.stat{padding:17px 20px}.label{color:var(--muted);font-size:13px}.num{font-size:28px;font-weight:850;margin-top:4px}.layout{display:grid;grid-template-columns:350px minmax(0,1fr);gap:18px;align-items:start}.panel{padding:21px}.panelhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:15px}.panel h2{font-size:17px;margin:0}.hint{color:var(--muted);font-size:12px;margin-top:4px}
-label{display:block;font-size:13px;font-weight:650;margin:12px 0 6px}input,textarea,select{width:100%;border:1px solid #dce1eb;border-radius:10px;padding:11px 12px;background:white;color:var(--ink);font:inherit;outline:none}input:focus,textarea:focus,select:focus{border-color:#818cf8;box-shadow:0 0 0 3px #eef2ff}textarea{resize:vertical;min-height:70px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}button,.filebtn{border:0;border-radius:10px;padding:10px 13px;font:inherit;font-size:13px;font-weight:750;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px}.primary{background:var(--p);color:white}.secondary{background:#eef0ff;color:#3932a8}.ghost{background:#f3f5f9;color:#3b4559}.danger{background:#fff0f0;color:#b91c1c}.small{padding:7px 10px;font-size:12px}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:13px}.toolbar input{flex:1;min-width:160px}.toolbar select{width:auto;min-width:130px}.list{display:flex;flex-direction:column;gap:10px}.appointment{border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;grid-template-columns:70px minmax(0,1fr) auto;gap:12px;align-items:start}.datebox{border-radius:11px;background:#f0f2ff;text-align:center;padding:9px 4px;color:#4338ca}.day{font-size:24px;line-height:1.1;font-weight:850}.month{font-size:11px;text-transform:uppercase;font-weight:800;margin-top:4px}.itemtitle{font-weight:800;overflow-wrap:anywhere}.meta{font-size:12px;color:var(--muted);margin-top:5px;display:flex;gap:8px;flex-wrap:wrap}.desc{font-size:13px;color:#4b5567;margin-top:7px;white-space:pre-wrap;overflow-wrap:anywhere}.pill{display:inline-flex;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:800;margin-top:8px}.scheduled{background:#e8f1ff;color:#2457a6}.done{background:#e4f8ef;color:#08764e}.cancelled{background:#fff0f0;color:#b91c1c}.itemactions{display:flex;gap:5px;flex-wrap:wrap}.empty{text-align:center;padding:38px 15px;color:var(--muted)}.empty strong{display:block;color:#344054;margin:8px}.footerline{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:15px;color:var(--muted);font-size:12px}.notice{font-size:12px;color:var(--muted);margin-top:13px;padding:11px;background:#f7f8fc;border-radius:10px}.toast{position:fixed;bottom:18px;right:18px;max-width:calc(100% - 36px);background:#172033;color:white;padding:12px 16px;border-radius:12px;box-shadow:var(--shadow);z-index:10;display:none}.toast.show{display:block}.hidden{display:none!important}
-@media(max-width:850px){.layout{grid-template-columns:1fr}.stat{padding:13px}.num{font-size:24px}}@media(max-width:560px){header{padding:17px}.today{display:none}main{padding:0 11px 28px;margin-top:14px}.stats{gap:7px}.stat{padding:11px 9px}.stat .label{font-size:11px}.num{font-size:21px}.panel{padding:15px}.appointment{grid-template-columns:56px minmax(0,1fr);gap:9px}.day{font-size:21px}.itemactions{grid-column:2}.toolbar select{flex:1}.grid2{gap:8px}}
-
-/* Tela splash ADIMAX */
-#splashScreen{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(ellipse at 50% 20%,#293966 0%,#111a32 48%,#080e1e 100%);color:#fff;cursor:pointer;transition:opacity .45s ease,visibility .45s ease}
-#splashScreen.splash-leaving{opacity:0;visibility:hidden;pointer-events:none}
-.splash-content{width:min(680px,100%);text-align:center;animation:splash-rise .7s ease both}
-.splash-logo{width:82px;height:82px;border-radius:25px;display:grid;place-items:center;margin:0 auto 26px;background:linear-gradient(135deg,#a5b4fc,#4f46e5);box-shadow:0 18px 50px #4f46e555;font-size:38px;font-weight:950;letter-spacing:-2px}
-.splash-eyebrow{font-size:11px;font-weight:850;letter-spacing:4px;text-transform:uppercase;color:#a5b4fc;margin-bottom:14px}
-.splash-content h2{font-size:clamp(34px,6vw,58px);letter-spacing:-1.8px;line-height:1.05;margin:0;font-weight:850}
-.splash-content h2 span{color:#a5b4fc}
-.splash-subtitle{font-size:clamp(14px,2vw,17px);color:#c6cde0;line-height:1.7;max-width:450px;margin:20px auto 30px}
-.splash-enter{display:inline-flex;align-items:center;justify-content:center;gap:12px;padding:15px 23px;border:1px solid #a5b4fc66;border-radius:14px;background:#6366f1;color:white;font:inherit;font-size:14px;font-weight:800;box-shadow:0 10px 35px #4f46e544;transition:transform .2s,background .2s}
-#splashScreen:hover .splash-enter{transform:translateY(-2px);background:#7477ff}
-.splash-enter .arrow{font-size:20px;line-height:1}
-.splash-foot{margin-top:34px;color:#8490ab;font-size:11px;letter-spacing:1.3px}
-.splash-orb{position:absolute;border:1px solid #a5b4fc15;border-radius:50%;pointer-events:none}
-.splash-orb.one{width:330px;height:330px;left:-165px;top:12%}
-.splash-orb.two{width:480px;height:480px;right:-260px;bottom:-220px}
-@keyframes splash-rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
-@media(prefers-reduced-motion:reduce){.splash-content{animation:none}#splashScreen{transition:none}}
-
-
-/* Identidade visual Instituto ADIMAX — laranja, preto e branco */
-:root{--bg:#fff8eb;--card:#ffffff;--ink:#171717;--muted:#66615a;--line:#f0dfc2;--p:#f59e0b;--green:#15803d;--red:#dc2626;--shadow:0 12px 32px #7c4a1012}
-body{background:linear-gradient(180deg,#fff3d9 0,#fffaf1 280px,#fffaf7 100%);color:var(--ink)}
-header{background:#151515;color:#fff;border-bottom:5px solid #f59e0b}
-.logo{background:#f59e0b;color:#111;box-shadow:0 5px 18px #f59e0b35}
-.brand h1{letter-spacing:1.5px;font-weight:950}
-.brand p{color:#f6d9a1}
-#connection{color:#fde68a}
-.stat,.panel{border-color:#f1e2c8;box-shadow:0 10px 28px #5b34100a}
-.stat{border-top:3px solid #f59e0b}
-input:focus,textarea:focus,select:focus{border-color:#f59e0b;box-shadow:0 0 0 3px #fef3c7}
-.primary{background:#f59e0b;color:#171717}.primary:hover{background:#e99000}
-.secondary{background:#fff0cc;color:#7c3f00}.ghost{background:#f7f3ec;color:#3b342a}
-.danger{background:#fff0ed;color:#b91c1c}
-.appointment{border-color:#f0e4d0}.datebox{background:#fff0c2;color:#8a4300}
-.scheduled{background:#fff0cc;color:#884400}.done{background:#dcfce7;color:#166534}
-.cancelled{background:#fee2e2;color:#b91c1c}
-.notice{background:#fff8e8;border:1px solid #f5e3bd}
-#splashScreen{background:radial-gradient(ellipse at 50% 25%,#ffbd37 0%,#ffa500 55%,#f29300 100%);color:#080808}
-.splash-logo{background:transparent;border:4px solid #080808;border-radius:50%;width:112px;height:112px;color:#080808;box-shadow:none;font-size:56px;letter-spacing:0}
-.splash-eyebrow{color:#151515;letter-spacing:5px;font-weight:900}
-.splash-content h2{color:#080808;text-transform:uppercase;letter-spacing:2px;font-style:italic}
-.splash-content h2 span{color:#080808;font-weight:950;letter-spacing:1px}
-.splash-subtitle{color:#21180b;font-weight:500}
-.splash-enter{background:#111;color:#fff;border:2px solid #111;box-shadow:0 10px 25px #4c2d0026}
-#splashScreen:hover .splash-enter{background:#292929}
-.splash-foot{color:#392708;font-weight:800}
-.splash-orb{border-color:#17171712}
-
-
-/* Layout simplificado: branco, laranja e preto */
-:root{--bg:#f7f7f7;--card:#fff;--ink:#171717;--muted:#666;--line:#e8e8e8;--p:#f28c00;--green:#16803c;--red:#c62828;--shadow:0 3px 14px #0000000a}
-body{background:#f7f7f7;color:#171717}
-header{padding:17px max(18px,calc((100% - 1180px)/2));background:#171717;border-bottom:4px solid #f28c00}
-.logo{width:42px;height:42px;border-radius:10px;background:#f28c00;color:#111;box-shadow:none}
-.brand h1{font-size:20px;letter-spacing:.5px}
-.brand p{color:#dedede}
-#connection{color:#f9b44d}
-main{margin:22px auto;max-width:1180px}
-.stats{gap:12px;margin-bottom:14px}
-.stat,.panel{border:1px solid #e8e8e8;border-radius:12px;box-shadow:0 3px 14px #00000008}
-.stat{padding:15px 18px;border-top:3px solid #f28c00}
-.label{font-size:12px;font-weight:650;color:#666}
-.num{font-size:26px;color:#171717}
-.layout{grid-template-columns:minmax(290px,330px) minmax(0,1fr);gap:14px}
-.panel{padding:18px}
-.panelhead{margin-bottom:12px}
-.panel h2{font-size:16px}
-.hint{font-size:12px}
-label{font-size:12px;margin:11px 0 5px;color:#333}
-input,textarea,select{border:1px solid #d8d8d8;border-radius:8px;padding:10px 11px;background:#fff;color:#171717}
-input:focus,textarea:focus,select:focus{border-color:#f28c00;box-shadow:0 0 0 3px #f28c001f}
-button,.filebtn{border-radius:8px;padding:10px 12px;transition:background .15s ease,transform .15s ease}
-button:active{transform:translateY(1px)}
-.primary{background:#f28c00;color:#171717}.primary:hover{background:#e67e00}
-.secondary{background:#fff0d6;color:#663800;border:1px solid #f4d8a9}
-.ghost{background:#f1f1f1;color:#222}
-.danger{background:#fff0f0;color:#a51e1e}
-.appointment{background:#fff;border:1px solid #e6e6e6;border-radius:10px;padding:13px}
-.appointment:hover{border-color:#f0b35d}
-.datebox{background:#fff0d6;color:#7a4000;border-radius:8px}
-.itemtitle{font-size:14px}
-.meta{font-size:12px}
-.pill{border-radius:6px}
-.scheduled{background:#fff0d6;color:#7a4000}
-.done{background:#e6f5e9;color:#176534}
-.cancelled{background:#ffeded;color:#a51e1e}
-.notice{background:#fff;border:1px solid #e8e8e8;border-left:3px solid #f28c00;border-radius:8px}
-.empty{padding:32px 15px}
-.toast{background:#171717;border-left:4px solid #f28c00;border-radius:8px}
-#splashScreen{background:#f28c00;color:#111}
-.splash-logo{background:transparent;border:3px solid #111;color:#111;box-shadow:none}
-.splash-eyebrow{color:#111}
-.splash-content h2,.splash-content h2 span{color:#111}
-.splash-subtitle{color:#292014}
-.splash-enter{background:#171717;color:#fff;border:2px solid #171717;box-shadow:none;border-radius:8px}
-#splashScreen:hover .splash-enter{background:#333}
-.splash-foot{color:#33200a}
-@media(max-width:850px){.layout{grid-template-columns:1fr}.panel{padding:16px}}
-@media(max-width:560px){header{padding:15px}.stats{gap:7px}.stat{padding:11px 9px}.panel{padding:13px}.appointment{grid-template-columns:52px minmax(0,1fr)}.itemactions{grid-column:2}.splash-logo{width:88px;height:88px;font-size:44px}}
-
-
-/* Paleta final: branco, preto e laranja — AGENDAMENTO PROMOCIONAIS */
-:root{--bg:#f5f5f5;--card:#fff;--ink:#171717;--muted:#666;--line:#e5e5e5;--p:#f28c00;--green:#16803c;--red:#c62828;--shadow:0 4px 16px #0000000a}
-body{background:#f5f5f5;color:#171717}
-header{background:#111;color:#fff;border-bottom:4px solid #f28c00}
-.logo{background:#f28c00;color:#111;border-radius:9px;box-shadow:none;font-size:15px}
-.brand h1{font-size:clamp(15px,2vw,20px);letter-spacing:.4px;font-weight:900}
-.brand p{color:#e5e5e5}
-#connection{color:#ffb74d}
-.stat,.panel{background:#fff;border:1px solid #e5e5e5;border-radius:10px;box-shadow:0 4px 16px #00000008}
-.stat{border-top:3px solid #f28c00}
-.num{color:#111}
-.primary{background:#f28c00;color:#111}.primary:hover{background:#df7e00}
-.secondary{background:#fff0dc;color:#663800;border:1px solid #f5d5a6}
-.ghost{background:#f0f0f0;color:#222}
-.appointment{background:#fff;border-color:#e5e5e5}
-.appointment:hover{border-color:#f28c00}
-.datebox{background:#fff0dc;color:#7a4000}
-.scheduled{background:#fff0dc;color:#7a4000}
-.done{background:#e7f6eb;color:#176534}
-.cancelled{background:#ffeded;color:#a51e1e}
-.notice{background:#fff;border:1px solid #e5e5e5;border-left:3px solid #f28c00}
-#splashScreen{background:#f28c00;color:#111}
-.splash-logo{background:#111;color:#f28c00;border:0;border-radius:12px;font-size:30px;font-weight:950;width:88px;height:88px}
-.splash-eyebrow{color:#111;letter-spacing:2px}
-.splash-content h2,.splash-content h2 span{color:#111;letter-spacing:0}
-.splash-subtitle{color:#292015}
-.splash-enter{background:#111;color:#fff;border:2px solid #111;border-radius:8px;box-shadow:none}
-#splashScreen:hover .splash-enter{background:#292929}
-.splash-foot{color:#33200a}
-@media(max-width:560px){.brand h1{max-width:230px;line-height:1.2}.splash-content h2{font-size:clamp(30px,8vw,46px)}}
-
-
-/* Logotipo oficial do aplicativo */
-.logo{padding:0;overflow:hidden;background:transparent!important}
-.logo img{width:100%;height:100%;display:block;object-fit:cover}
-.splash-logo{padding:0;overflow:hidden}
-.splash-logo img{width:100%;height:100%;display:block;object-fit:cover}
-
-/* Paleta final: branco, azul-marinho e azul — estilo moderno */
-:root{
- --bg:#f3f6fc;--card:#ffffff;--ink:#17233b;--muted:#64748b;--line:#dfe7f2;
- --p:#2563eb;--green:#15803d;--red:#dc2626;--shadow:0 8px 24px #0f28520c
-}
-body{background:linear-gradient(180deg,#edf3fc 0,#f7f9fd 320px,#f5f7fb 100%);color:#17233b}
-header{background:#142544;color:#fff;border-bottom:4px solid #2563eb}
-.logo{background:linear-gradient(135deg,#60a5fa,#2563eb);color:#fff;border-radius:12px;box-shadow:0 5px 16px #2563eb30}
-.brand h1{color:#fff;letter-spacing:.3px;font-weight:900}
-.brand p{color:#cbd8ee}
-#connection{color:#bfdbfe}
-.stat,.panel{background:#fff;border:1px solid #dfe7f2;border-radius:16px;box-shadow:0 8px 24px #18345b0b}
-.stat{border-top:3px solid #2563eb}
-.label{color:#64748b}
-.num{color:#142544}
-input,textarea,select{border-color:#d4deed;background:#fff;color:#17233b;border-radius:10px}
-input:focus,textarea:focus,select:focus{border-color:#3b82f6;box-shadow:0 0 0 3px #dbeafe}
-.primary{background:#2563eb;color:#fff}
-.primary:hover{background:#1d4ed8}
-.secondary{background:#e8f1ff;color:#1d4ed8;border:1px solid #c7dcff}
-.ghost{background:#eef2f8;color:#334155}
-.danger{background:#fff1f2;color:#be123c}
-.appointment{background:#fff;border:1px solid #dfe7f2;border-radius:13px}
-.appointment:hover{border-color:#93baf8;box-shadow:0 5px 16px #2563eb0c}
-.datebox{background:#e8f1ff;color:#1d4ed8;border-radius:10px}
-.scheduled{background:#e8f1ff;color:#1d4ed8}
-.done{background:#dcfce7;color:#166534}
-.cancelled{background:#ffe4e6;color:#9f1239}
-.notice{background:#f3f7ff;border:1px solid #dbe7fb;border-left:3px solid #2563eb;border-radius:10px;color:#475569}
-.empty{color:#64748b}
-.empty strong{color:#243653}
-.toast{background:#142544;border-left:4px solid #3b82f6;border-radius:12px}
-#splashScreen{background:radial-gradient(ellipse at 50% 15%,#315b99 0%,#1b345c 42%,#10203b 100%);color:#fff}
-.splash-logo{background:linear-gradient(135deg,#60a5fa,#2563eb);color:#fff;border:0;border-radius:22px;box-shadow:0 18px 42px #02081755}
-.splash-eyebrow{color:#93c5fd;letter-spacing:3px}
-.splash-content h2,.splash-content h2 span{color:#fff;letter-spacing:-1px;font-style:normal}
-.splash-content h2 span{color:#93c5fd}
-.splash-subtitle{color:#d5e2f5}
-.splash-enter{background:#2563eb;color:#fff;border:1px solid #60a5fa;border-radius:12px;box-shadow:0 10px 28px #02081730}
-#splashScreen:hover .splash-enter{background:#1d4ed8}
-.splash-foot{color:#a9bedc}
-.splash-orb{border-color:#bfdbfe18}
-@media(max-width:560px){.stat,.panel{border-radius:12px}.splash-logo{border-radius:18px}}
-
-</style></head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Cache-Control" content="no-cache">
+  <meta name="theme-color" content="#142544">
+  <title>AGENDAMENTO PROMOCIONAIS</title>
+  <link rel="icon" type="image/svg+xml" href="./logo-agendamento.svg">
+  <link rel="stylesheet" href="./styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
 <body>
-
-<div id="splashScreen" role="button" tabindex="0" aria-label="Clique para entrar no sistema ADIMAX">
-  <div class="splash-orb one"></div><div class="splash-orb two"></div>
-  <div class="splash-content">
-    <div class="splash-logo" aria-label="Logotipo Agendamento Promocionais"><img src="./logo-agendamento.svg" alt="Logo Agendamento Promocionais"></div>
-    <div class="splash-eyebrow">GESTÃO DE AGENDAMENTOS</div>
-    <h2>AGENDAMENTO<br><span>PROMOCIONAIS</span></h2>
-    <p class="splash-subtitle">Agendamento de recebimentos e cargas.<br>Organização, cuidado e praticidade em um só lugar.</p>
-    <button class="splash-enter" id="splashEnter" type="button">Clique para acessar os agendamentos <span class="arrow">→</span></button>
-    <div class="splash-foot">AGENDAMENTO PROMOCIONAIS</div>
+  <div id="splashScreen" role="button" tabindex="0" aria-label="Clique para entrar no sistema">
+    <div class="splash-orb one"></div><div class="splash-orb two"></div>
+    <div class="splash-content">
+      <div class="splash-logo"><img src="./logo-agendamento.svg" alt="Logo Agendamento Promocionais"></div>
+      <div class="splash-eyebrow">GESTÃO DE AGENDAMENTOS</div>
+      <h2>AGENDAMENTO<br><span>PROMOCIONAIS</span></h2>
+      <p class="splash-subtitle">Agendamento de recebimentos e cargas.<br>Organização, cuidado e praticidade em um só lugar.</p>
+      <button class="splash-enter" id="splashEnter" type="button">Clique para acessar os agendamentos <span>→</span></button>
+      <div class="splash-foot">AGENDAMENTO PROMOCIONAIS</div>
+    </div>
   </div>
-</div>
 
-<header><div class="brand"><div class="logo"><img src="./logo-agendamento.svg" alt="Logo Agendamento Promocionais"></div><div><h1>AGENDAMENTO PROMOCIONAIS</h1><p>Gestão de agendamentos e recebimentos</p></div></div><div><div id="connection">Conectando ao banco...</div><div id="todayLabel" class="today" style="font-size:12px;color:#d9def0;margin-top:4px"></div></div></header>
-<main>
-<div class="viewnav"><button type="button" id="agendaViewBtn" class="active">Agenda</button><button type="button" id="overviewViewBtn">Visão geral</button><button type="button" id="suppliersViewBtn">Fornecedores</button></div>
-<section class="stats"><div class="stat"><div class="label">Agendamentos no total</div><div class="num" id="totalCount">0</div></div><div class="stat"><div class="label">Para hoje</div><div class="num" id="todayCount">0</div></div><div class="stat"><div class="label">Concluídos</div><div class="num" id="doneCount">0</div></div></section>
-<div class="layout"><section class="panel"><div class="panelhead"><div><h2 id="formTitle">Novo agendamento</h2><div class="hint">Preencha os dados abaixo</div></div><span>✦</span></div>
-<form id="appointmentForm"><input type="hidden" id="editId">
-<label for="supplier">Fornecedor *</label><select id="supplier" required><option value="">Selecione um fornecedor</option></select><div class="hint">Cadastre ou altere as opções na página Fornecedores.</div>
-<label for="description">Descrição da carga</label><textarea id="description" maxlength="1000" placeholder="Produtos, quantidade ou observações..."></textarea>
-<div><label for="date">Data *</label><input id="date" type="date" required></div>
-<div class="grid2"><div><label for="shift">Turno que recebeu</label><select id="shift"><option value="">Selecione o turno</option><option value="T1">T1</option><option value="T2">T2</option><option value="T3">T3</option></select></div><div><label for="status">Status</label><select id="status"><option>Agendado</option><option>Concluído</option><option>Cancelado</option></select></div></div><label for="responsible">Responsável</label><input id="responsible" maxlength="100" placeholder="Opcional">
-<div class="actions"><button class="primary" id="saveBtn" type="submit">＋ Salvar agendamento</button><button class="ghost hidden" id="cancelEdit" type="button">Cancelar edição</button></div>
-<div class="notice" id="notice">Os dados serão salvos no Supabase e compartilhados entre dispositivos.</div></form></section>
-<section class="panel"><div class="panelhead"><div><h2>Agenda</h2><div class="hint">Consulte e gerencie os recebimentos</div></div></div>
-<div class="toolbar"><input id="search" placeholder="⌕ Buscar NF ou fornecedor..." aria-label="Buscar"><select id="statusFilter" aria-label="Filtrar por status"><option value="">Todos os status</option><option>Agendado</option><option>Concluído</option><option>Cancelado</option></select><select id="dateFilter" aria-label="Filtrar por data"><option value="all">Todas as datas</option><option value="upcoming">Hoje e futuros</option><option value="past">Anteriores</option></select></div>
-<div id="appointments" class="list"><div class="empty">Carregando agendamentos...</div></div>
-<div class="footerline"><span id="resultCount">0 registros</span><div class="actions" style="margin:0"><button class="secondary small" id="exportBtn" type="button">↧ Exportar CSV</button><label class="filebtn ghost small" style="margin:0">↥ Importar JSON<input id="importFile" type="file" accept=".json,application/json" class="hidden"></label></div></div>
-</section></div>
-<section id="overviewView" class="panel overview-panel hidden">
-<div class="panelhead"><div><h2>Visão geral dos agendamentos</h2><div class="hint">Visualize todos os dados cadastrados e combine filtros para localizar registros.</div></div><button type="button" class="secondary small" id="overviewExportBtn">↧ Exportar CSV</button></div>
-<div class="month-summary"><div class="month-card"><span>Registros no mês</span><strong id="monthTotal">0</strong></div><div class="month-card"><span>Recebidos / concluídos</span><strong id="monthReceived">0</strong></div><div class="month-card"><span>Agendados</span><strong id="monthScheduled">0</strong></div><div class="month-card"><span>Cancelados</span><strong id="monthCancelled">0</strong></div></div>
-<div class="overview-filters">
-<div><label for="ovMonth">Mês de referência</label><input id="ovMonth" type="month"></div>
-<div><label for="ovSearch">Busca geral</label><input id="ovSearch" placeholder="Fornecedor, descrição, responsável..."></div>
-<div><label for="ovSupplier">Fornecedor</label><select id="ovSupplier"><option value="">Todos os fornecedores</option></select></div>
-<div><label for="ovStatus">Status</label><select id="ovStatus"><option value="">Todos os status</option><option>Agendado</option><option>Concluído</option><option>Cancelado</option></select></div>
-<div><label for="ovShift">Turno recebido</label><select id="ovShift"><option value="">Todos os turnos</option><option value="T1">T1</option><option value="T2">T2</option><option value="T3">T3</option><option value="none">Não informado</option></select></div>
-<div><label for="ovFrom">Data inicial</label><input id="ovFrom" type="date"></div>
-<div><label for="ovTo">Data final</label><input id="ovTo" type="date"></div>
-</div>
-<div class="actions" style="margin:0 0 14px"><button type="button" class="ghost small" id="clearOverviewFilters">Limpar filtros</button><span id="overviewCount" class="overview-count" style="align-self:center">0 registros</span></div>
-<div class="overview-table-wrap"><table class="overview-table"><thead><tr><th>Data</th><th>Fornecedor</th><th>Descrição da carga</th><th>Turno recebido</th><th>Status</th><th>Responsável</th></tr></thead><tbody id="overviewRows"><tr><td colspan="6">Carregando dados...</td></tr></tbody></table></div>
-</section><section id="suppliersView" class="panel overview-panel hidden"><div class="panelhead"><div><h2>Cadastro de fornecedores</h2><div class="hint">Adicione os fornecedores que aparecerão na escolha do agendamento.</div></div></div><form id="supplierForm"><label for="newSupplier">Nome do fornecedor</label><div class="grid2"><input id="newSupplier" maxlength="140" placeholder="Digite o nome do fornecedor" required><button class="primary" id="addSupplierBtn" type="submit">＋ Adicionar</button></div></form><div class="notice">Os fornecedores são salvos no banco de dados e ficam disponíveis para todos que usam este sistema.</div><div id="supplierList" class="list" style="margin-top:14px"><div class="empty">Carregando fornecedores...</div></div></section></main><div class="toast" id="toast" role="status" aria-live="polite"></div>
- <script src="./supabase-config.js"></script>
- <script>
-(() => {
-const $=id=>document.getElementById(id);
-const {
-  SUPABASE_URL,
-  SUPABASE_KEY,
-  TABLE,
-  SHARED_USER_ID
-} = window.APP_CONFIG;
-let client=null,records=[],suppliers=[];
-const now=new Date(),todayISO=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-$('date').value=todayISO;$('ovMonth').value=todayISO.slice(0,7);$('todayLabel').textContent=now.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function toast(s){const el=$('toast');el.textContent=s;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),3000)}
-function mapRow(r){return{id:r.id,nf:r.codigo||'',supplier:r.fornecedor??r.supplier??'',description:r.descricao??r.description??'',date:r.agendamento||todayISO,time:'',shift:r.turno_recebido||'',status:r.status||(r.concluido?'Concluído':'Agendado'),responsible:r.responsavel??r.responsible??'',createdAt:r.created_at,updatedAt:r.updated_at}}
-function toRow(x){return{id:x.id||crypto.randomUUID(),user_id:SHARED_USER_ID,codigo:x.nf||'',fornecedor:x.supplier,descricao:x.description||'',agendamento:x.date,turno_recebido:x.shift||null,status:x.status||'Agendado',concluido:x.status==='Concluído',responsavel:x.responsible||'',updated_at:new Date().toISOString()}}
-async function loadRecords(){const {data,error}=await client.from(TABLE).select('*').eq('user_id',SHARED_USER_ID).order('agendamento',{ascending:true});if(error)throw error;records=(data||[]).map(mapRow);render()}
-async function loadSuppliers(){const {data,error}=await client.from('fornecedores_agendamento').select('id,nome').eq('user_id',SHARED_USER_ID).order('nome',{ascending:true});if(error)throw error;suppliers=data||[];renderSupplierOptions();renderSupplierList()}
-function renderSupplierOptions(){const el=$('supplier'),current=el.value;const names=[...new Set([...suppliers.map(x=>x.nome),...records.map(x=>x.supplier)].filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));el.innerHTML='<option value="">Selecione um fornecedor</option>'+names.map(n=>'<option value="'+esc(n)+'">'+esc(n)+'</option>').join('');if(names.includes(current))el.value=current}
-function renderSupplierList(){const el=$('supplierList');if(!el)return;if(!suppliers.length){el.innerHTML='<div class="empty"><strong>Nenhum fornecedor cadastrado</strong><span>Use o campo acima para adicionar o primeiro.</span></div>';return}el.innerHTML=suppliers.map(s=>'<article class="appointment" style="grid-template-columns:minmax(0,1fr) auto;align-items:center"><div class="itemtitle">'+esc(s.nome)+'</div><div class="itemactions"><button class="danger small" type="button" data-delete-supplier="'+esc(s.id)+'">Excluir</button></div></article>').join('')}
-async function saveRecord(x){const row={...toRow(x),user_id:SHARED_USER_ID};if(records.some(r=>String(r.id)===String(x.id))){const {id,user_id,...changes}=row;const {data,error}=await client.from(TABLE).update(changes).eq('id',id).eq('user_id',SHARED_USER_ID).select('id').maybeSingle();if(error)throw error;if(!data)throw new Error('Nenhuma linha foi atualizada. Atualize a página e tente editar novamente; se persistir, verifique as permissões de atualização no Supabase.');return data;}const {data,error}=await client.from(TABLE).insert(row).select('id').single();if(error)throw error;if(!data)throw new Error('O banco não confirmou a inclusão do agendamento.');return data;}
-async function deleteRecord(id){const {data,error}=await client.from(TABLE).delete().eq('id',id).select('id');if(error)throw error;if(!data||data.length===0)throw new Error('O Supabase não excluiu nenhuma linha. A política RLS ou o identificador do agendamento não corresponde ao registro.');return true}
-function render(){ renderSupplierOptions(); $('totalCount').textContent=records.length;$('todayCount').textContent=records.filter(x=>x.date===todayISO&&x.status!=='Cancelado').length;$('doneCount').textContent=records.filter(x=>x.status==='Concluído').length;
-const q=$('search').value.trim().toLocaleLowerCase('pt-BR'),sf=$('statusFilter').value,df=$('dateFilter').value;
-const arr=records.filter(x=>[x.supplier,x.description,x.responsible,x.shift].join(' ').toLocaleLowerCase('pt-BR').includes(q)&&(!sf||x.status===sf)&&(df==='all'||(df==='upcoming'?x.date>=todayISO:x.date<todayISO))).sort((a,b)=>a.date.localeCompare(b.date));
-$('resultCount').textContent=`${arr.length} ${arr.length===1?'registro':'registros'}`;
-renderOverview();
-if(!arr.length){$('appointments').innerHTML='<div class="empty"><div style="font-size:30px">▦</div><strong>Nenhum agendamento encontrado</strong><span>Cadastre um agendamento ou ajuste os filtros.</span></div>';return}
-$('appointments').innerHTML=arr.map(x=>{const [y,m,d]=x.date.split('-'),date=new Date(+y,+m-1,+d),month=date.toLocaleDateString('pt-BR',{month:'short'}).replace('.',''),cls=x.status==='Concluído'?'done':x.status==='Cancelado'?'cancelled':'scheduled';return `<article class="appointment"><div class="datebox"><div class="day">${d}</div><div class="month">${esc(month)}</div></div><div><div class="itemtitle">${esc(x.supplier)}</div><div class="meta">${x.shift?`<span>Turno recebido: <b>${esc(x.shift)}</b></span>`:''}</div>${x.description?`<div class="desc">${esc(x.description)}</div>`:''}${x.responsible?`<div class="meta">Responsável: ${esc(x.responsible)}</div>`:''}<span class="pill ${cls}">${esc(x.status)}</span></div><div class="itemactions"><button class="secondary small" data-edit="${esc(x.id)}">Editar</button><button class="danger small" data-delete="${esc(x.id)}">Excluir</button></div></article>`}).join('')}
+  <header>
+    <div class="brand"><div class="logo"><img src="./logo-agendamento.svg" alt="Logo Agendamento Promocionais"></div><div><h1>AGENDAMENTO PROMOCIONAIS</h1><p>Gestão de agendamentos e recebimentos</p></div></div>
+    <div><div id="connection">Conectando ao banco...</div><div id="todayLabel" class="today" style="font-size:12px;color:#d9def0;margin-top:4px"></div></div>
+  </header>
 
-function renderOverview(){
- const supplierSelect=$('ovSupplier'), previous=supplierSelect.value;
- const suppliers=[...new Set(records.map(x=>x.supplier).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
- supplierSelect.innerHTML='<option value="">Todos os fornecedores</option>'+suppliers.map(s=>'<option value="'+esc(s)+'">'+esc(s)+'</option>').join('');
- if(suppliers.includes(previous))supplierSelect.value=previous;
- const month=$('ovMonth').value||todayISO.slice(0,7);
- const monthRecords=records.filter(x=>(x.date||'').slice(0,7)===month);
- $('monthTotal').textContent=monthRecords.length;
- $('monthReceived').textContent=monthRecords.filter(x=>x.status==='Concluído').length;
- $('monthScheduled').textContent=monthRecords.filter(x=>x.status==='Agendado').length;
- $('monthCancelled').textContent=monthRecords.filter(x=>x.status==='Cancelado').length;
- const q=$('ovSearch').value.trim().toLocaleLowerCase('pt-BR'),supplier=supplierSelect.value,status=$('ovStatus').value,shift=$('ovShift').value,from=$('ovFrom').value,to=$('ovTo').value;
- const filtered=records.filter(x=>{
-  const hay=[x.supplier,x.description,x.responsible,x.shift,x.status,x.date].join(' ').toLocaleLowerCase('pt-BR');
-  return (x.date||'').slice(0,7)===month&&(!q||hay.includes(q))&&(!supplier||x.supplier===supplier)&&(!status||x.status===status)&&(!shift||(shift==='none'?!x.shift:x.shift===shift))&&(!from||x.date>=from)&&(!to||x.date<=to);
- }).sort((a,b)=>b.date.localeCompare(a.date));
- $('overviewCount').textContent=filtered.length+' de '+records.length+' registro(s) • '+month;
- $('overviewRows').innerHTML=filtered.length?filtered.map(x=>{const dateCell=esc(new Date(x.date+'T12:00:00').toLocaleDateString('pt-BR'));const supplierCell=esc(x.supplier||'—');const descriptionCell=esc(x.description||'—');const shiftCell=esc(x.shift||'Não informado');const statusCell=esc(x.status||'Agendado');const responsibleCell=esc(x.responsible||'—');return `<tr><td data-column="Data">${dateCell}</td><td data-column="Fornecedor"><strong>${supplierCell}</strong></td><td data-column="Descrição da carga">${descriptionCell}</td><td data-column="Turno recebido">${shiftCell}</td><td data-column="Status">${statusCell}</td><td data-column="Responsável">${responsibleCell}</td></tr>`}).join(''):'<tr><td colspan="6" style="text-align:center;padding:24px">Nenhum registro corresponde ao mês e aos filtros selecionados.</td></tr>';
-}
-function showView(view){
- const overview=view==='overview', supplierView=view==='suppliers';
- $('overviewView').classList.toggle('hidden',!overview);
- $('suppliersView').classList.toggle('hidden',!supplierView);
- document.querySelector('.layout').classList.toggle('hidden',overview||supplierView);
- document.querySelector('.stats').classList.toggle('hidden',overview||supplierView);
- $('agendaViewBtn').classList.toggle('active',!overview&&!supplierView);$('overviewViewBtn').classList.toggle('active',overview);$('suppliersViewBtn').classList.toggle('active',supplierView);
- if(overview)renderOverview(); if(supplierView)renderSupplierList();
-}
-function resetForm(){ $('appointmentForm').reset();$('editId').value='';$('date').value=todayISO;$('status').value='Agendado';$('formTitle').textContent='Novo agendamento';$('saveBtn').textContent='＋ Salvar agendamento';$('cancelEdit').classList.add('hidden')}
-$('appointmentForm').addEventListener('submit',async e=>{e.preventDefault();const id=$('editId').value||crypto.randomUUID(),existing=records.find(x=>String(x.id)===String(id));const x={id,nf:'',supplier:$('supplier').value.trim(),description:$('description').value.trim(),date:$('date').value,shift:$('shift').value,status:$('status').value,responsible:$('responsible').value.trim(),createdAt:existing?.createdAt};if(!x.supplier||!x.date){toast('Preencha fornecedor e data.');return}
-$('saveBtn').disabled=true;$('saveBtn').textContent='Salvando...';try{await saveRecord(x);await loadRecords();resetForm();toast(existing?'Agendamento atualizado no Supabase!':'Agendamento salvo no Supabase!')}catch(err){console.error(err);toast('Erro ao salvar: '+(err.message||'verifique a conexão/permissões.'))}finally{$('saveBtn').disabled=false;$('saveBtn').textContent='＋ Salvar agendamento'}});
-$('cancelEdit').addEventListener('click',resetForm);
-$('supplierForm').addEventListener('submit',async e=>{e.preventDefault();const nome=$('newSupplier').value.trim();if(!nome)return;if(suppliers.some(s=>s.nome.toLocaleLowerCase('pt-BR')===nome.toLocaleLowerCase('pt-BR'))){toast('Este fornecedor já está cadastrado.');return}const btn=$('addSupplierBtn');btn.disabled=true;btn.textContent='Salvando...';try{const {error}=await client.from('fornecedores_agendamento').insert({user_id:SHARED_USER_ID,nome});if(error)throw error;await loadSuppliers();$('newSupplier').value='';toast('Fornecedor adicionado às opções.')}catch(err){console.error(err);toast('Erro ao cadastrar fornecedor: '+(err.message||'verifique o banco de dados.'))}finally{btn.disabled=false;btn.textContent='＋ Adicionar'}});
-$('supplierList').addEventListener('click',async e=>{const btn=e.target.closest('[data-delete-supplier]');if(!btn)return;const item=suppliers.find(s=>String(s.id)===String(btn.dataset.deleteSupplier));if(!item||!confirm('Excluir "'+item.nome+'" da lista de opções? Os agendamentos antigos serão mantidos.'))return;btn.disabled=true;try{const {error}=await client.from('fornecedores_agendamento').delete().eq('id',item.id).eq('user_id',SHARED_USER_ID);if(error)throw error;await loadSuppliers();toast('Fornecedor removido das opções.')}catch(err){console.error(err);toast('Erro ao excluir fornecedor: '+(err.message||'verifique as permissões.'))}finally{btn.disabled=false}});
+  <main>
+    <nav class="viewnav" aria-label="Navegação principal"><button type="button" id="agendaViewBtn" class="active">Agenda</button><button type="button" id="overviewViewBtn">Visão geral</button><button type="button" id="suppliersViewBtn">Fornecedores</button></nav>
 
-$('appointments').addEventListener('click',async e=>{const eb=e.target.closest('[data-edit]'),db=e.target.closest('[data-delete]');if(eb){const x=records.find(r=>String(r.id)===String(eb.dataset.edit));if(!x)return;$('editId').value=x.id;$('supplier').value=x.supplier;$('description').value=x.description;$('date').value=x.date;$('shift').value=x.shift||'';$('status').value=x.status;$('responsible').value=x.responsible;$('formTitle').textContent='Editar agendamento';$('saveBtn').textContent='Salvar alterações';$('cancelEdit').classList.remove('hidden');window.scrollTo({top:0,behavior:'smooth'})}if(db){const x=records.find(r=>String(r.id)===String(db.dataset.delete));if(x&&confirm(`Excluir a NF ${x.nf} — ${x.supplier}? Esta ação não pode ser desfeita.`)){db.disabled=true;db.textContent='Excluindo...';try{await deleteRecord(x.id);await loadRecords();toast('Agendamento excluído com sucesso.')}catch(err){console.error('Falha ao excluir agendamento:',err);toast('Não foi possível excluir: '+(err.message||'verifique as permissões do Supabase.'))}finally{db.disabled=false;db.textContent='Excluir'}}}});
-['search','statusFilter','dateFilter'].forEach(id=>$(id).addEventListener(id==='search'?'input':'change',render));
-$('agendaViewBtn').addEventListener('click',()=>showView('agenda'));
-$('overviewViewBtn').addEventListener('click',()=>showView('overview'));
-$('suppliersViewBtn').addEventListener('click',()=>showView('suppliers'));
-['ovMonth','ovSupplier','ovStatus','ovShift','ovFrom','ovTo'].forEach(id=>$(id).addEventListener('change',renderOverview));$('ovSearch').addEventListener('input',renderOverview);
-$('clearOverviewFilters').addEventListener('click',()=>{['ovSearch','ovSupplier','ovStatus','ovShift','ovFrom','ovTo'].forEach(id=>$(id).value='');$('ovMonth').value=todayISO.slice(0,7);renderOverview()});
-function csvCell(value){const s=String(value??'');return '"'+s.replace(/"/g,'""')+'"'}
-function exportCsv(rows,filename){
- const headers=['Data','Fornecedor','Descrição da carga','Turno recebido','Status','Responsável'];
- const lines=[headers,...rows.map(x=>[x.date?new Date(x.date+'T12:00:00').toLocaleDateString('pt-BR'):'',x.supplier,x.description,x.shift,x.status,x.responsible])].map(row=>row.map(csvCell).join(';'));
- const blob=new Blob(['\\ufeff'+lines.join('\\r\\n')],{type:'text/csv;charset=utf-8;'});
- const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;a.click();URL.revokeObjectURL(url);
-}
-$('overviewExportBtn').addEventListener('click',()=>{const month=$('ovMonth').value||todayISO.slice(0,7),q=$('ovSearch').value.trim().toLocaleLowerCase('pt-BR'),supplier=$('ovSupplier').value,status=$('ovStatus').value,shift=$('ovShift').value,from=$('ovFrom').value,to=$('ovTo').value;const filtered=records.filter(x=>(x.date||'').slice(0,7)===month&&(!q||[x.supplier,x.description,x.responsible,x.shift,x.status,x.date].join(' ').toLocaleLowerCase('pt-BR').includes(q))&&(!supplier||x.supplier===supplier)&&(!status||x.status===status)&&(!shift||(shift==='none'?!x.shift:x.shift===shift))&&(!from||x.date>=from)&&(!to||x.date<=to));exportCsv(filtered,'visao-geral-agendamentos-'+todayISO+'.csv');toast('Arquivo CSV exportado.')});
-$('exportBtn').addEventListener('click',()=>{exportCsv(records,'agendamento-promocionais-'+todayISO+'.csv');toast('Arquivo CSV exportado.')});
-$('importFile').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{const data=JSON.parse(await file.text()),arr=Array.isArray(data)?data:data.records;if(!Array.isArray(arr))throw Error('Formato inválido');if(!confirm(`Importar ${arr.length} registro(s)? IDs iguais serão atualizados.`))return;for(const raw of arr){if(!raw||!raw.supplier||!raw.date)continue;await saveRecord({...raw,id:raw.id||crypto.randomUUID()})}await loadRecords();toast('Importação concluída no Supabase.')}catch(err){toast('Falha na importação: '+err.message)}finally{e.target.value=''}});
-(async()=>{try{if(!window.supabase?.createClient)throw Error('A biblioteca Supabase não carregou. Verifique sua conexão.');client=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);await loadSuppliers();await loadRecords();$('connection').textContent='● Conectado ao Supabase';$('connection').style.color='#86efac';$('notice').textContent='Conectado ao Supabase. Os registros são compartilhados entre dispositivos que usam este sistema. Exporte um backup periodicamente.'}catch(err){console.error('Falha ao iniciar conexão Supabase:',err);const detail=err?.message||err?.details||err?.hint||'Verifique a internet, a API do Supabase e as permissões da tabela.';$('connection').textContent='● Falha na conexão';$('connection').style.color='#fca5a5';$('notice').textContent='Erro de conexão: '+detail;$('appointments').innerHTML=`<div class="empty"><strong>Não foi possível conectar ao banco de dados</strong><span>${esc(detail)}</span><div style="margin-top:14px"><button type="button" class="secondary" onclick="location.reload()">Tentar novamente</button></div></div>`;toast('Falha na conexão com o Supabase: '+detail)}})();
-})();
-</script>
-<script>
-(() => {
- const screen=document.getElementById('splashScreen');
- if(!screen)return;
- const enter=()=>{
-   if(screen.classList.contains('splash-leaving'))return;
-   screen.classList.add('splash-leaving');
-   window.setTimeout(()=>{screen.remove();document.getElementById('nf')?.focus({preventScroll:true});},460);
- };
- screen.addEventListener('click',enter);
- screen.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();enter();}});
-})();
-</script>
-<script src="./fornecedor-pesquisa.js"></script>
-</body></html>
-<!-- Atualização de publicação GitHub Pages: 2026-10-19 -->
+    <section class="stats"><div class="stat"><div class="label">Agendamentos no total</div><div class="num" id="totalCount">0</div></div><div class="stat"><div class="label">Para hoje</div><div class="num" id="todayCount">0</div></div><div class="stat"><div class="label">Concluídos</div><div class="num" id="doneCount">0</div></div></section>
+
+    <div class="layout">
+      <section class="panel">
+        <div class="panelhead"><div><h2 id="formTitle">Novo agendamento</h2><div class="hint">Preencha os dados abaixo</div></div><span>✦</span></div>
+        <form id="appointmentForm"><input type="hidden" id="editId">
+          <label for="supplier">Fornecedor *</label><select id="supplier" required><option value="">Selecione um fornecedor</option></select><div class="hint">Cadastre ou altere as opções na página Fornecedores.</div>
+          <label for="description">Descrição da carga</label><textarea id="description" maxlength="1000" placeholder="Produtos, quantidade ou observações..."></textarea>
+          <label for="date">Data *</label><input id="date" type="date" required>
+          <div class="grid2"><div><label for="shift">Turno que recebeu</label><select id="shift"><option value="">Selecione o turno</option><option value="T1">T1</option><option value="T2">T2</option><option value="T3">T3</option></select></div><div><label for="status">Status</label><select id="status"><option>Agendado</option><option>Concluído</option><option>Cancelado</option></select></div></div>
+          <label for="responsible">Responsável</label><input id="responsible" maxlength="100" placeholder="Opcional">
+          <div class="actions"><button class="primary" id="saveBtn" type="submit">＋ Salvar agendamento</button><button class="ghost hidden" id="cancelEdit" type="button">Cancelar edição</button></div>
+          <div class="notice" id="notice">Os dados serão salvos no Supabase e compartilhados entre dispositivos.</div>
+        </form>
+      </section>
+
+      <section class="panel">
+        <div class="panelhead"><div><h2>Agenda</h2><div class="hint">Consulte e gerencie os recebimentos</div></div></div>
+        <div class="toolbar"><input id="search" placeholder="⌕ Buscar fornecedor, descrição ou responsável..." aria-label="Buscar"><select id="statusFilter" aria-label="Filtrar por status"><option value="">Todos os status</option><option>Agendado</option><option>Concluído</option><option>Cancelado</option></select><select id="dateFilter" aria-label="Filtrar por data"><option value="all">Todas as datas</option><option value="upcoming">Hoje e futuros</option><option value="past">Anteriores</option></select></div>
+        <div id="appointments" class="list"><div class="empty">Carregando agendamentos...</div></div>
+        <div class="footerline"><span id="resultCount">0 registros</span><div class="actions" style="margin:0"><button class="secondary small" id="exportBtn" type="button">↧ Exportar CSV</button><label class="filebtn ghost small" style="margin:0">↥ Importar JSON<input id="importFile" type="file" accept=".json,application/json" class="hidden"></label></div></div>
+      </section>
+    </div>
+
+    <section id="overviewView" class="panel overview-panel hidden">
+      <div class="panelhead"><div><h2>Visão geral dos agendamentos</h2><div class="hint">Visualize todos os dados cadastrados e combine filtros para localizar registros.</div></div><button type="button" class="secondary small" id="overviewExportBtn">↧ Exportar CSV</button></div>
+      <div class="month-summary"><div class="month-card"><span>Registros no mês</span><strong id="monthTotal">0</strong></div><div class="month-card"><span>Recebidos / concluídos</span><strong id="monthReceived">0</strong></div><div class="month-card"><span>Agendados</span><strong id="monthScheduled">0</strong></div><div class="month-card"><span>Cancelados</span><strong id="monthCancelled">0</strong></div></div>
+      <div class="overview-filters"><div><label for="ovMonth">Mês de referência</label><input id="ovMonth" type="month"></div><div><label for="ovSearch">Busca geral</label><input id="ovSearch" placeholder="Fornecedor, descrição, responsável..."></div><div><label for="ovSupplier">Fornecedor</label><select id="ovSupplier"><option value="">Todos os fornecedores</option></select></div><div><label for="ovStatus">Status</label><select id="ovStatus"><option value="">Todos os status</option><option>Agendado</option><option>Concluído</option><option>Cancelado</option></select></div><div><label for="ovShift">Turno recebido</label><select id="ovShift"><option value="">Todos os turnos</option><option value="T1">T1</option><option value="T2">T2</option><option value="T3">T3</option><option value="none">Não informado</option></select></div><div><label for="ovFrom">Data inicial</label><input id="ovFrom" type="date"></div><div><label for="ovTo">Data final</label><input id="ovTo" type="date"></div></div>
+      <div class="actions" style="margin:0 0 14px"><button type="button" class="ghost small" id="clearOverviewFilters">Limpar filtros</button><span id="overviewCount" class="overview-count" style="align-self:center">0 registros</span></div>
+      <div class="overview-table-wrap"><table class="overview-table"><thead><tr><th>Data</th><th>Fornecedor</th><th>Descrição da carga</th><th>Turno recebido</th><th>Status</th><th>Responsável</th></tr></thead><tbody id="overviewRows"><tr><td colspan="6">Carregando dados...</td></tr></tbody></table></div>
+    </section>
+
+    <section id="suppliersView" class="panel overview-panel hidden">
+      <div class="panelhead"><div><h2>Cadastro de fornecedores</h2><div class="hint">Adicione os fornecedores que aparecerão na escolha do agendamento.</div></div></div>
+      <form id="supplierForm"><label for="newSupplier">Nome do fornecedor</label><div class="grid2"><input id="newSupplier" maxlength="140" placeholder="Digite o nome do fornecedor" required><button class="primary" id="addSupplierBtn" type="submit">＋ Adicionar</button></div></form>
+      <div class="notice">Os fornecedores são salvos no banco de dados e ficam disponíveis para todos que usam este sistema.</div>
+      <div id="supplierList" class="list" style="margin-top:14px"><div class="empty">Carregando fornecedores...</div></div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="./supabase-config.js"></script>
+  <script src="./app.js"></script>
+  <script src="./fornecedor-pesquisa.js"></script>
+  <script src="./splash.js"></script>
+</body>
+</html>
