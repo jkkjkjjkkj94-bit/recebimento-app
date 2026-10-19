@@ -16,15 +16,17 @@
       if (sessionError) throw sessionError;
       if (!sessionData?.session?.user) {
         window.__agendamentoRecords = [];
+        window.__agendamentoHistory = [];
         window.dispatchEvent(new Event('agendamento-records'));
         return;
       }
 
-      const { data, error } = await db.from(cfg.TABLE)
-        .select('*')
-        .eq('user_id', cfg.SHARED_USER_ID)
-        .order('agendamento', { ascending: true });
+      const [{ data, error }, { data: history, error: historyError }] = await Promise.all([
+        db.from(cfg.TABLE).select('*').eq('user_id', cfg.SHARED_USER_ID).order('agendamento', { ascending: true }),
+        db.from('agendamentos_historico').select('id,agendamento_id,acao,usuario_id,usuario_email,alteracoes,criado_em').order('criado_em', { ascending: false }).limit(30)
+      ]);
       if (error) throw error;
+      if (historyError) throw historyError;
 
       window.__agendamentoRecords = (data || []).map(r => ({
         id: r.id,
@@ -34,9 +36,12 @@
         shift: r.turno_recebido || '',
         status: r.status || (r.concluido ? 'Concluído' : 'Agendado'),
         responsible: r.responsavel ?? r.responsible ?? '',
+        createdById: r.criado_por_id || '',
+        createdByEmail: r.criado_por_email || '',
         createdAt: r.created_at,
         updatedAt: r.updated_at
       }));
+      window.__agendamentoHistory = history || [];
       window.dispatchEvent(new Event('agendamento-records'));
     } catch (e) {
       console.warn('Gestão: não foi possível sincronizar os dados.', e);
