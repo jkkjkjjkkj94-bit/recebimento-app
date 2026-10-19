@@ -12,8 +12,41 @@ header{background:#111a32;color:white;padding:22px max(18px,calc((100% - 1180px)
 main{max-width:1180px;margin:25px auto;padding:0 18px 40px}.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin-bottom:18px}.stat,.panel{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}.stat{padding:17px 20px}.label{color:var(--muted);font-size:13px}.num{font-size:28px;font-weight:850;margin-top:4px}.layout{display:grid;grid-template-columns:350px minmax(0,1fr);gap:18px;align-items:start}.panel{padding:21px}.panelhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:15px}.panel h2{font-size:17px;margin:0}.hint{color:var(--muted);font-size:12px;margin-top:4px}
 label{display:block;font-size:13px;font-weight:650;margin:12px 0 6px}input,textarea,select{width:100%;border:1px solid #dce1eb;border-radius:10px;padding:11px 12px;background:white;color:var(--ink);font:inherit;outline:none}input:focus,textarea:focus,select:focus{border-color:#818cf8;box-shadow:0 0 0 3px #eef2ff}textarea{resize:vertical;min-height:70px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}button,.filebtn{border:0;border-radius:10px;padding:10px 13px;font:inherit;font-size:13px;font-weight:750;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px}.primary{background:var(--p);color:white}.secondary{background:#eef0ff;color:#3932a8}.ghost{background:#f3f5f9;color:#3b4559}.danger{background:#fff0f0;color:#b91c1c}.small{padding:7px 10px;font-size:12px}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:13px}.toolbar input{flex:1;min-width:160px}.toolbar select{width:auto;min-width:130px}.list{display:flex;flex-direction:column;gap:10px}.appointment{border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;grid-template-columns:70px minmax(0,1fr) auto;gap:12px;align-items:start}.datebox{border-radius:11px;background:#f0f2ff;text-align:center;padding:9px 4px;color:#4338ca}.day{font-size:24px;line-height:1.1;font-weight:850}.month{font-size:11px;text-transform:uppercase;font-weight:800;margin-top:4px}.itemtitle{font-weight:800;overflow-wrap:anywhere}.meta{font-size:12px;color:var(--muted);margin-top:5px;display:flex;gap:8px;flex-wrap:wrap}.desc{font-size:13px;color:#4b5567;margin-top:7px;white-space:pre-wrap;overflow-wrap:anywhere}.pill{display:inline-flex;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:800;margin-top:8px}.scheduled{background:#e8f1ff;color:#2457a6}.done{background:#e4f8ef;color:#08764e}.cancelled{background:#fff0f0;color:#b91c1c}.itemactions{display:flex;gap:5px;flex-wrap:wrap}.empty{text-align:center;padding:38px 15px;color:var(--muted)}.empty strong{display:block;color:#344054;margin:8px}.footerline{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:15px;color:var(--muted);font-size:12px}.notice{font-size:12px;color:var(--muted);margin-top:13px;padding:11px;background:#f7f8fc;border-radius:10px}.toast{position:fixed;bottom:18px;right:18px;max-width:calc(100% - 36px);background:#172033;color:white;padding:12px 16px;border-radius:12px;box-shadow:var(--shadow);z-index:10;display:none}.toast.show{display:block}.hidden{display:none!important}
 @media(max-width:850px){.layout{grid-template-columns:1fr}.stat{padding:13px}.num{font-size:24px}}@media(max-width:560px){header{padding:17px}.today{display:none}main{padding:0 11px 28px;margin-top:14px}.stats{gap:7px}.stat{padding:11px 9px}.stat .label{font-size:11px}.num{font-size:21px}.panel{padding:15px}.appointment{grid-template-columns:56px minmax(0,1fr);gap:9px}.day{font-size:21px}.itemactions{grid-column:2}.toolbar select{flex:1}.grid2{gap:8px}}
+
+/* Tela splash ADIMAX */
+#splashScreen{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(ellipse at 50% 20%,#293966 0%,#111a32 48%,#080e1e 100%);color:#fff;cursor:pointer;transition:opacity .45s ease,visibility .45s ease}
+#splashScreen.splash-leaving{opacity:0;visibility:hidden;pointer-events:none}
+.splash-content{width:min(680px,100%);text-align:center;animation:splash-rise .7s ease both}
+.splash-logo{width:82px;height:82px;border-radius:25px;display:grid;place-items:center;margin:0 auto 26px;background:linear-gradient(135deg,#a5b4fc,#4f46e5);box-shadow:0 18px 50px #4f46e555;font-size:38px;font-weight:950;letter-spacing:-2px}
+.splash-eyebrow{font-size:11px;font-weight:850;letter-spacing:4px;text-transform:uppercase;color:#a5b4fc;margin-bottom:14px}
+.splash-content h2{font-size:clamp(34px,6vw,58px);letter-spacing:-1.8px;line-height:1.05;margin:0;font-weight:850}
+.splash-content h2 span{color:#a5b4fc}
+.splash-subtitle{font-size:clamp(14px,2vw,17px);color:#c6cde0;line-height:1.7;max-width:450px;margin:20px auto 30px}
+.splash-enter{display:inline-flex;align-items:center;justify-content:center;gap:12px;padding:15px 23px;border:1px solid #a5b4fc66;border-radius:14px;background:#6366f1;color:white;font:inherit;font-size:14px;font-weight:800;box-shadow:0 10px 35px #4f46e544;transition:transform .2s,background .2s}
+#splashScreen:hover .splash-enter{transform:translateY(-2px);background:#7477ff}
+.splash-enter .arrow{font-size:20px;line-height:1}
+.splash-foot{margin-top:34px;color:#8490ab;font-size:11px;letter-spacing:1.3px}
+.splash-orb{position:absolute;border:1px solid #a5b4fc15;border-radius:50%;pointer-events:none}
+.splash-orb.one{width:330px;height:330px;left:-165px;top:12%}
+.splash-orb.two{width:480px;height:480px;right:-260px;bottom:-220px}
+@keyframes splash-rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){.splash-content{animation:none}#splashScreen{transition:none}}
+
 </style></head>
 <body>
+
+<div id="splashScreen" role="button" tabindex="0" aria-label="Clique para entrar no sistema ADIMAX">
+  <div class="splash-orb one"></div><div class="splash-orb two"></div>
+  <div class="splash-content">
+    <div class="splash-logo">A</div>
+    <div class="splash-eyebrow">Sistema de logística</div>
+    <h2>Bem-vindo à<br><span>ADIMAX</span></h2>
+    <p class="splash-subtitle">Agendamento de recebimentos e cargas.<br>Organização, controle e praticidade em um só lugar.</p>
+    <button class="splash-enter" id="splashEnter" type="button">Clique para acessar os agendamentos <span class="arrow">→</span></button>
+    <div class="splash-foot">GESTÃO DE RECEBIMENTOS • ADIMAX</div>
+  </div>
+</div>
+
 <header><div class="brand"><div class="logo">A</div><div><h1>ADIMAX</h1><p>Agendamento de recebimentos e cargas</p></div></div><div><div id="connection">Conectando ao banco...</div><div id="todayLabel" class="today" style="font-size:12px;color:#d9def0;margin-top:4px"></div></div></header>
 <main>
 <section class="stats"><div class="stat"><div class="label">Agendamentos no total</div><div class="num" id="totalCount">0</div></div><div class="stat"><div class="label">Para hoje</div><div class="num" id="todayCount">0</div></div><div class="stat"><div class="label">Concluídos</div><div class="num" id="doneCount">0</div></div></section>
@@ -64,4 +97,19 @@ $('exportBtn').addEventListener('click',()=>{const blob=new Blob([JSON.stringify
 $('importFile').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{const data=JSON.parse(await file.text()),arr=Array.isArray(data)?data:data.records;if(!Array.isArray(arr))throw Error('Formato inválido');if(!confirm(`Importar ${arr.length} registro(s)? IDs iguais serão atualizados.`))return;for(const raw of arr){if(!raw||!raw.nf||!raw.supplier||!raw.date)continue;await saveRecord({...raw,id:raw.id||crypto.randomUUID()})}await loadRecords();toast('Importação concluída no Supabase.')}catch(err){toast('Falha na importação: '+err.message)}finally{e.target.value=''}});
 (async()=>{try{if(!window.supabase?.createClient)throw Error('A biblioteca Supabase não carregou. Verifique sua conexão.');client=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);await loadRecords();$('connection').textContent='● Conectado ao Supabase';$('connection').style.color='#86efac';$('notice').textContent='Conectado ao Supabase. Os registros são compartilhados entre dispositivos que usam este sistema. Exporte um backup periodicamente.'}catch(err){console.error(err);$('connection').textContent='● Falha na conexão';$('connection').style.color='#fca5a5';$('appointments').innerHTML=`<div class="empty"><strong>Não foi possível conectar ao Supabase</strong><span>${esc(err.message||'Verifique a internet e as permissões do projeto.')}</span></div>`;toast('Falha na conexão com o Supabase.')}})();
 })();
-</script></body></html>
+</script>
+<script>
+(() => {
+ const screen=document.getElementById('splashScreen');
+ if(!screen)return;
+ const enter=()=>{
+   if(screen.classList.contains('splash-leaving'))return;
+   screen.classList.add('splash-leaving');
+   window.setTimeout(()=>{screen.remove();document.getElementById('nf')?.focus({preventScroll:true});},460);
+ };
+ screen.addEventListener('click',enter);
+ screen.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();enter();}});
+})();
+</script>
+
+</body></html>
