@@ -171,9 +171,23 @@
             document.body.insertAdjacentHTML("afterbegin", '<div class="m-4 rounded-lg bg-red-50 p-4 text-sm text-red-700">Não foi possível conectar ao Supabase. Verifique a internet e atualize a página com Ctrl + F5.</div>');
             throw new Error("Supabase JS CDN não carregou.");
         }
+        // Limita o tempo das chamadas de rede para a interface nunca ficar presa indefinidamente.
+        const fetchComTimeout = async (input, init = {}) => {
+            const controlador = new AbortController();
+            const temporizador = setTimeout(() => controlador.abort(), 15000);
+            let sinal = controlador.signal;
+            if (init.signal && typeof AbortSignal.any === "function") {
+                sinal = AbortSignal.any([init.signal, controlador.signal]);
+            }
+            try {
+                return await fetch(input, { ...init, signal: sinal });
+            } finally {
+                clearTimeout(temporizador);
+            }
+        };
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
             auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
-            // Evita que tentativas automáticas de rede deixem o formulário preso em "Salvando...".
+            global: { fetch: fetchComTimeout },
             db: { retry: false }
         });
         // O IndexedDB antigo é opcional; sua falha não deve bloquear login/cadastro na nuvem.
@@ -296,14 +310,20 @@
             try {
                 await inserirAgendamento({ codigo, familia, descricao, agendamento, concluido: false });
                 document.getElementById("formBrinde").reset();
+                mensagem.className = "text-xs mt-2 text-green-700";
+                mensagem.textContent = "Agendamento gravado no banco de dados. Atualizando a lista...";
+                // A gravação já foi confirmada; uma falha ao atualizar a lista não deve mascarar isso.
                 await carregarBrindes();
                 mensagem.className = "text-xs mt-2 text-green-700";
                 mensagem.textContent = "Agendamento salvo com sucesso na nuvem.";
             } catch (error) {
                 console.error("Erro ao salvar o agendamento:", error);
+                const detalhe = error?.name === "AbortError"
+                    ? "A conexão demorou mais de 15 segundos. Verifique a internet e tente novamente."
+                    : (error?.message || error?.details || JSON.stringify(error));
                 mensagem.className = "text-xs mt-2 text-red-700";
-                mensagem.textContent = "Não foi possível salvar: " + (error?.message || error?.details || JSON.stringify(error));
-                alert("Erro ao salvar o agendamento:\n" + (error?.message || error?.details || JSON.stringify(error)));
+                mensagem.textContent = "Não foi possível salvar: " + detalhe;
+                alert("Erro ao salvar o agendamento:\n" + detalhe);
             } finally {
                 botaoSalvar.disabled = false;
                 botaoSalvar.textContent = "Salvar Agendamento";
