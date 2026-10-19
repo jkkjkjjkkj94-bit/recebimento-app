@@ -4,9 +4,7 @@
   const toggle = document.getElementById('sidebarToggle');
   if (!sidebar || !toggle) return;
 
-  toggle.addEventListener('click', () => {
-    sidebar.classList.toggle('expanded');
-  });
+  toggle.addEventListener('click', () => sidebar.classList.toggle('expanded'));
 
   const viewButtons = {
     agenda: document.getElementById('agendaViewBtn'),
@@ -15,9 +13,7 @@
   };
 
   function markActive(view) {
-    document.querySelectorAll('.side-link[data-view]').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.view === view);
-    });
+    document.querySelectorAll('.side-link[data-view]').forEach(btn => btn.classList.toggle('active', btn.dataset.view === view));
   }
 
   document.querySelectorAll('.side-link[data-view]').forEach(btn => {
@@ -34,21 +30,20 @@
   viewButtons.suppliers?.addEventListener('click', () => markActive('suppliers'));
 
   document.querySelector('[data-action="new"]')?.addEventListener('click', () => {
-    viewButtons.agenda?.click();
-    markActive('agenda');
-    document.getElementById('appointmentForm')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    setTimeout(() => document.getElementById('supplierSearch')?.focus() || document.getElementById('supplier')?.focus(), 250);
+    viewButtons.agenda?.click(); markActive('agenda');
+    document.getElementById('appointmentForm')?.scrollIntoView({ behavior:'smooth', block:'start' });
+    setTimeout(() => { const el=document.getElementById('supplierSearch') || document.getElementById('supplier'); el?.focus(); }, 250);
   });
 
   document.querySelector('[data-action="search"]')?.addEventListener('click', () => {
-    viewButtons.agenda?.click();
-    markActive('agenda');
-    const search = document.getElementById('search');
-    search?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    setTimeout(() => search?.focus(), 250);
+    viewButtons.agenda?.click(); markActive('agenda');
+    const search=document.getElementById('search'); search?.scrollIntoView({behavior:'smooth',block:'center'}); setTimeout(()=>search?.focus(),250);
   });
 
-  document.querySelector('[data-action="export"]')?.addEventListener('click', () => {
-    document.getElementById('exportBtn')?.click();
-  });
+  document.querySelector('[data-action="export"]')?.addEventListener('click', () => document.getElementById('exportBtn')?.click());
+
+  function loadScript(src, done) {
+    const s=document.createElement('script'); s.src=src; s.onload=()=>done?.(); document.body.appendChild(s);
+  }
+  loadScript('./gestao-dados.js', () => loadScript('./recursos-gestao.js'));
 })();
