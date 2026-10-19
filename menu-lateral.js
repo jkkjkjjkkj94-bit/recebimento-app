@@ -16,13 +16,7 @@
     body{padding-left:76px;transition:padding-left .22s ease}
     body.sidebar-open{padding-left:230px}
     .viewnav{display:none!important}
-    @media(max-width:700px){
-      #adimaxSidebar{width:64px;padding:10px 7px}
-      #adimaxSidebar.open{width:220px}
-      body{padding-left:64px}
-      body.sidebar-open{padding-left:64px}
-      #adimaxSidebar.open{box-shadow:8px 0 28px #0005}
-    }
+    @media(max-width:700px){#adimaxSidebar{width:64px;padding:10px 7px}#adimaxSidebar.open{width:220px}body{padding-left:64px}body.sidebar-open{padding-left:64px}#adimaxSidebar.open{box-shadow:8px 0 28px #0005}}
   `;
   document.head.appendChild(style);
 
@@ -33,31 +27,17 @@
     <button class="side-item active" type="button" data-target="agendaViewBtn"><span class="side-icon">▣</span><span class="side-label">Agenda</span></button>
     <button class="side-item" type="button" data-target="overviewViewBtn"><span class="side-icon">▥</span><span class="side-label">Visão geral</span></button>
     <button class="side-item" type="button" data-target="suppliersViewBtn"><span class="side-icon">♙</span><span class="side-label">Fornecedores</span></button>
-    <div class="side-spacer"></div>
-  `;
+    <div class="side-spacer"></div>`;
   document.body.appendChild(sidebar);
 
-  const toggle = sidebar.querySelector('.side-toggle');
-  toggle.addEventListener('click', () => {
-    const open = sidebar.classList.toggle('open');
-    document.body.classList.toggle('sidebar-open', open);
+  sidebar.querySelector('.side-toggle').addEventListener('click',()=>{
+    const open=sidebar.classList.toggle('open');
+    document.body.classList.toggle('sidebar-open',open);
   });
-
-  const items = [...sidebar.querySelectorAll('.side-item')];
-  items.forEach(item => item.addEventListener('click', () => {
-    const target = document.getElementById(item.dataset.target);
-    if (target) target.click();
-    items.forEach(x => x.classList.toggle('active', x === item));
-    if (innerWidth <= 700) {
-      sidebar.classList.remove('open');
-      document.body.classList.remove('sidebar-open');
-    }
+  const items=[...sidebar.querySelectorAll('.side-item')];
+  items.forEach(item=>item.addEventListener('click',()=>{
+    document.getElementById(item.dataset.target)?.click();
+    items.forEach(x=>x.classList.toggle('active',x===item));
+    if(innerWidth<=700){sidebar.classList.remove('open');document.body.classList.remove('sidebar-open')}
   }));
-
-  const originalButtons = ['agendaViewBtn','overviewViewBtn','suppliersViewBtn'];
-  originalButtons.forEach(id => {
-    const btn = document.getElementById(id);
-    if (!btn) return;
-    btn.addEventListener('click', () => items.forEach(x => x.classList.toggle('active', x.dataset.target === id)));
-  });
 })();
