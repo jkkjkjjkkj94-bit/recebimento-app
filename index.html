@@ -1,579 +1,67 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <title>ADIMAX | Gestão de Notas Fiscais e Cargas</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Supabase banco na nuvem -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- Dexie.js mantido para importar dados locais antigos -->
-    <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-    </style>
-</head>
-<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
-
-    <!-- ADIMAX: abrir diretamente na agenda, sem login ou cadastro -->
-    <div id="appShell" class="flex flex-col min-h-screen">
-    <!-- Cabeçalho -->
-    <header class="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-            <div class="flex items-center space-x-3">
-                <div class="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-sm">A</div>
-                <div>
-                    <h1 class="font-semibold text-gray-900 leading-tight">ADIMAX</h1>
-                    <p class="text-xs text-gray-500">Controle de Agendamento e Notas Fiscais</p>
-                </div>
-            </div>
-            
-            <div class="flex items-center space-x-2 flex-wrap justify-end">
-                <button type="button" onclick="importarDadosLocais()" class="bg-white border border-blue-200 hover:bg-blue-50 text-blue-700 font-medium px-3 py-1.5 rounded-lg text-xs transition shadow-sm">Importar dados antigos</button>
-                <label for="importarCsv" class="cursor-pointer bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium px-3 py-1.5 rounded-lg text-xs transition shadow-sm flex items-center space-x-1">
-                    <span>Importar CSV</span>
-                </label>
-                <input type="file" id="importarCsv" accept=".csv" class="hidden" onchange="importarCSV(event)">
-
-                <button type="button" onclick="exportarCSV()" class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium px-3 py-1.5 rounded-lg text-xs transition shadow-sm flex items-center space-x-1">
-                    <span>Exportar CSV</span>
-                </button>
-            </div>
-        </div>
-    </header>
-
-    <!-- Conteúdo Principal -->
-    <main class="max-w-6xl mx-auto px-6 py-8 flex-grow w-full grid grid-cols-1 md:grid-cols-3 gap-8">
-        
-        <!-- Formulário de Cadastro / Novo Agendamento -->
-        <section class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm h-fit">
-            <h2 class="text-base font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-100">Novo Agendamento</h2>
-            <form id="formBrinde" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">NF (Nota Fiscal)</label>
-                    <input type="text" id="codigo" required placeholder="Ex: 12345" 
-                        class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Fornecedor</label>
-                    <input type="text" id="familia" required placeholder="Ex: Empresa Fornecedora" 
-                        class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Descrição</label>
-                    <textarea id="descricao" rows="3" required placeholder="Detalhes sobre os itens da carga..." 
-                        class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition resize-none"></textarea>
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Data do Agendamento</label>
-                    <input type="date" id="agendamento" required
-                        class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
-                </div>
-                <button type="submit" 
-                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg text-sm transition shadow-sm">
-                    Salvar Agendamento
-                </button>
-                <p id="mensagemAgendamento" role="status" aria-live="polite" class="text-xs mt-2"></p>
-            </form>
-        </section>
-
-        <!-- Lista e Painel de Agendamentos -->
-        <section id="painelAgendamentos" class="md:col-span-2 bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col">
-            <div class="flex justify-between items-center mb-4 pb-2 border-b border-gray-100">
-                <h2 class="text-base font-semibold text-gray-900">Agenda de Cargas e Notas Fiscais</h2>
-                <span id="totalBrindes" class="text-xs text-gray-500 font-medium">0 itens</span>
-            </div>
-
-            <!-- Campo de busca rápida e filtro por status -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-                <input type="text" id="busca" placeholder="Buscar por NF, fornecedor ou descrição..." oninput="carregarBrindes()"
-                    class="sm:col-span-2 px-3 py-2 text-sm border border-gray-200 bg-gray-50 rounded-lg focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500 transition">
-                
-                <select id="filtroStatus" onchange="carregarBrindes()"
-                    class="px-3 py-2 text-sm border border-gray-200 bg-gray-50 rounded-lg focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500 transition text-gray-700">
-                    <option value="todos">Todos os Status</option>
-                    <option value="concluido">✅ Carga Concluída / Recebida</option>
-                    <option value="vencidos">🔴 Vencidos</option>
-                    <option value="hoje">⚪ Hoje</option>
-                    <option value="futuros">🟡 Futuros (Agendados)</option>
-                </select>
-            </div>
-
-            <!-- Tabela -->
-            <div class="overflow-x-auto flex-grow">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="text-xs font-medium text-gray-400 border-b border-gray-100">
-                            <th class="pb-3 font-medium">Data Agendada</th>
-                            <th class="pb-3 font-medium">Fornecedor / NF</th>
-                            <th class="pb-3 font-medium">Descrição</th>
-                            <th class="pb-3 font-medium">Status da Carga</th>
-                            <th class="pb-3 font-medium text-right">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="listaBrindes" class="divide-y divide-gray-100 text-sm">
-                        <!-- Dados dinâmicos -->
-                    </tbody>
-                </table>
-            </div>
-        </section>
-    </main>
-
-    <!-- Modal Editar Registo Completo -->
-    <div id="modalAgendamento" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl relative">
-            <button type="button" onclick="fecharModalAgendamento()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 font-bold text-lg">&times;</button>
-            <h3 class="text-base font-semibold text-gray-900 mb-4">Editar Registo</h3>
-            
-            <form id="formAgendamentoModal" onsubmit="salvarEdicaoRegisto(event)" class="space-y-3">
-                <input type="hidden" id="editBrindeId">
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">NF (Nota Fiscal)</label>
-                    <input type="text" id="editCodigo" required class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Fornecedor</label>
-                    <input type="text" id="editFamilia" required class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Descrição</label>
-                    <textarea id="editDescricao" rows="2" required class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Data do Agendamento</label>
-                    <input type="date" id="editAgendamento" required class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-                <div class="flex justify-end space-x-2 pt-2">
-                    <button type="button" onclick="fecharModalAgendamento()" class="px-3 py-2 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg">Cancelar</button>
-                    <button type="submit" class="px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg">Salvar Alterações</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Rodapé -->
-    <footer class="bg-white border-t border-gray-200 py-4 text-center text-xs text-gray-400">
-        ADIMAX &copy; 2026 - Gestão de Agendamentos e Notas Fiscais
-    </footer>
-    </div>
-
-    <!-- Lógica JavaScript (Supabase público + PostgreSQL; Dexie para migração local) -->
-    <script>
-        const SUPABASE_URL = "https://innziuzgtpfsiywqmies.supabase.co";
-        const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_fJB7zijdznI9ob9l9jSGlQ_6oU_J-d1";
-        if (!window.supabase || typeof window.supabase.createClient !== "function") {
-            document.body.insertAdjacentHTML("afterbegin", '<div class="m-4 rounded-lg bg-red-50 p-4 text-sm text-red-700">Não foi possível conectar ao Supabase. Verifique a internet e atualize a página com Ctrl + F5.</div>');
-            throw new Error("Supabase JS CDN não carregou.");
-        }
-        // Limita o tempo das chamadas de rede para a interface nunca ficar presa indefinidamente.
-        const fetchComTimeout = async (input, init = {}) => {
-            const controlador = new AbortController();
-            const temporizador = setTimeout(() => controlador.abort(), 15000);
-            let sinal = controlador.signal;
-            if (init.signal && typeof AbortSignal.any === "function") {
-                sinal = AbortSignal.any([init.signal, controlador.signal]);
-            }
-            try {
-                return await fetch(input, { ...init, signal: sinal });
-            } finally {
-                clearTimeout(temporizador);
-            }
-        };
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-            auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
-            global: { fetch: fetchComTimeout },
-            db: { retry: false }
-        });
-        // O IndexedDB antigo é opcional; sua falha não deve bloquear login/cadastro na nuvem.
-        let db = null;
-        try {
-            if (typeof window.Dexie === "function") {
-                db = new window.Dexie("AdimaxNotasFiscaisDB");
-                db.version(2).stores({
-                    brindes: '++id, codigo, familia, descricao, agendamento, concluido'
-                });
-            }
-        } catch (error) {
-            console.warn("IndexedDB legado indisponível; autenticação continua habilitada.", error);
-        }
-        // Modo sem login: todos os visitantes usam o mesmo conjunto de registros.
-        // A segurança de acesso aos dados passa a depender das políticas públicas do banco.
-        const PUBLIC_USER_ID = "00000000-0000-4000-8000-000000000001";
-        let usuarioAtual = { id: PUBLIC_USER_ID, email: "Acesso compartilhado" };
-        const appShell = document.getElementById("appShell");
-
-        async function iniciarAplicacao() {
-            appShell.classList.remove("hidden");
-            appShell.classList.add("flex");
-            const lista = document.getElementById("listaBrindes");
-            if (lista) lista.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-xs text-gray-500">Conectando ao banco de dados...</td></tr>';
-            try {
-                await carregarBrindes();
-            } catch (error) {
-                console.error("Erro ao carregar agendamentos:", error);
-                if (lista) lista.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-xs text-red-600">Não foi possível carregar os dados da nuvem. Confira a conexão e as permissões do banco.</td></tr>';
-            }
-        }
-        window.addEventListener("load", iniciarAplicacao);
-        window.__adimaxAuthReady = true;
-
-        async function consultarAgendamentos() {
-            const { data, error } = await supabase.from("agendamentos_cargas").select("*").order("agendamento", { ascending: true });
-            if (error) throw error;
-            return (data || []).map(b => ({...b, familia: b.fornecedor, id: b.id}));
-        }
-        async function inserirAgendamento(brinde) {
-            const { data, error } = await supabase.from("agendamentos_cargas").insert({
-                user_id: usuarioAtual.id, codigo: brinde.codigo, fornecedor: brinde.familia,
-                descricao: brinde.descricao, agendamento: brinde.agendamento, concluido: !!brinde.concluido
-            }).select("id").single();
-            if (error) throw error;
-            if (!data?.id) throw new Error("O banco não confirmou a gravação do agendamento.");
-        }
-        async function atualizarAgendamento(id, campos) {
-            const update = {};
-            if ("codigo" in campos) update.codigo = campos.codigo;
-            if ("familia" in campos) update.fornecedor = campos.familia;
-            if ("descricao" in campos) update.descricao = campos.descricao;
-            if ("agendamento" in campos) update.agendamento = campos.agendamento;
-            if ("concluido" in campos) update.concluido = campos.concluido;
-            update.updated_at = new Date().toISOString();
-            const { error } = await supabase.from("agendamentos_cargas").update(update).eq("id", id);
-            if (error) throw error;
-        }
-
-        function obterStatusAgendamento(brinde) {
-            if (brinde.concluido) {
-                return { 
-                    status: 'concluido', 
-                    texto: 'Concluída / Recebida', 
-                    badgeClass: 'bg-blue-50 text-blue-700 border-blue-200 font-semibold' 
-                };
-            }
-
-            if (!brinde.agendamento) {
-                return { 
-                    status: 'sem_agendamento', 
-                    texto: 'Não agendado', 
-                    badgeClass: 'bg-gray-100 text-gray-600 border-gray-200' 
-                };
-            }
-
-            const hoje = new Date();
-            hoje.setHours(0, 0, 0, 0);
-
-            const dataAgendada = new Date(brinde.agendamento + 'T00:00:00');
-            const diffDias = Math.round((dataAgendada - hoje) / (1000 * 60 * 60 * 24));
-
-            if (diffDias < 0) {
-                return { 
-                    status: 'vencidos', 
-                    texto: dataAgendada.toLocaleDateString('pt-BR') + ' (Vencido)', 
-                    badgeClass: 'bg-red-50 text-red-700 border-red-200 font-semibold' 
-                };
-            } else if (diffDias === 0) {
-                return { 
-                    status: 'hoje', 
-                    texto: dataAgendada.toLocaleDateString('pt-BR') + ' (Hoje)', 
-                    badgeClass: 'bg-white text-gray-800 border-gray-300 shadow-sm font-bold' 
-                };
-            } else {
-                return { 
-                    status: 'futuros', 
-                    texto: `${dataAgendada.toLocaleDateString('pt-BR')} (Faltam ${diffDias} dia${diffDias > 1 ? 's' : ''})`, 
-                    badgeClass: 'bg-amber-50 text-amber-800 border-amber-200 font-semibold' 
-                };
-            }
-        }
-
-        // Cadastrar Agendamento
-        document.getElementById("formBrinde").addEventListener("submit", async (e) => {
-            e.preventDefault();
-
-            const codigo = document.getElementById("codigo").value.trim(); // NF
-            const familia = document.getElementById("familia").value.trim(); // Fornecedor
-            const descricao = document.getElementById("descricao").value.trim(); // Descrição
-            const agendamento = document.getElementById("agendamento").value;
-
-            const botaoSalvar = document.querySelector('#formBrinde button[type="submit"]');
-            const mensagem = document.getElementById("mensagemAgendamento");
-            botaoSalvar.disabled = true;
-            botaoSalvar.textContent = "Salvando...";
-            mensagem.className = "text-xs mt-2 text-gray-500";
-            mensagem.textContent = "Enviando para o banco de dados...";
-            try {
-                await inserirAgendamento({ codigo, familia, descricao, agendamento, concluido: false });
-                document.getElementById("formBrinde").reset();
-                mensagem.className = "text-xs mt-2 text-green-700";
-                mensagem.textContent = "Agendamento gravado no banco de dados. Atualizando a lista...";
-                // A gravação já foi confirmada; uma falha ao atualizar a lista não deve mascarar isso.
-                await carregarBrindes();
-                mensagem.className = "text-xs mt-2 text-green-700";
-                mensagem.textContent = "Agendamento salvo com sucesso na nuvem.";
-            } catch (error) {
-                console.error("Erro ao salvar o agendamento:", error);
-                const detalhe = error?.name === "AbortError"
-                    ? "A conexão demorou mais de 15 segundos. Verifique a internet e tente novamente."
-                    : (error?.message || error?.details || JSON.stringify(error));
-                mensagem.className = "text-xs mt-2 text-red-700";
-                mensagem.textContent = "Não foi possível salvar: " + detalhe;
-                alert("Erro ao salvar o agendamento:\n" + detalhe);
-            } finally {
-                botaoSalvar.disabled = false;
-                botaoSalvar.textContent = "Salvar Agendamento";
-            }
-        });
-
-        // Carregar e filtrar agendamentos
-        async function carregarBrindes() {
-            const listaElement = document.getElementById("listaBrindes");
-            listaElement.innerHTML = "";
-
-            const buscaTexto = document.getElementById("busca").value.toLowerCase();
-            const filtroStatus = document.getElementById("filtroStatus").value;
-
-            try {
-                if (!usuarioAtual) return;
-                let brindes = await consultarAgendamentos();
-
-                brindes = brindes.filter(b => {
-                    const statusInfo = obterStatusAgendamento(b);
-
-                    const bateBusca = (b.codigo && b.codigo.toLowerCase().includes(buscaTexto)) ||
-                                      (b.familia && b.familia.toLowerCase().includes(buscaTexto)) ||
-                                      (b.descricao && b.descricao.toLowerCase().includes(buscaTexto));
-
-                    const bateStatus = (filtroStatus === 'todos') || (statusInfo.status === filtroStatus);
-
-                    return bateBusca && bateStatus;
-                });
-
-                brindes.sort((a, b) => {
-                    if (a.concluido !== b.concluido) return a.concluido ? 1 : -1;
-                    if (!a.agendamento) return 1;
-                    if (!b.agendamento) return -1;
-                    return new Date(a.agendamento) - new Date(b.agendamento);
-                });
-
-                document.getElementById("totalBrindes").textContent = `${brindes.length} itens`;
-
-                if (brindes.length === 0) {
-                    listaElement.innerHTML = `
-                        <tr>
-                            <td colspan="5" class="py-6 text-center text-xs text-gray-400">Nenhum registo encontrado.</td>
-                        </tr>
-                    `;
-                    return;
-                }
-
-                brindes.forEach(brinde => {
-                    const tr = document.createElement("tr");
-                    tr.className = "hover:bg-gray-50 transition";
-                    
-                    const statusInfo = obterStatusAgendamento(brinde);
-                    const dataFormatada = brinde.agendamento ? new Date(brinde.agendamento + 'T00:00:00').toLocaleDateString('pt-BR') : 'Sem data';
-
-                    tr.innerHTML = `
-                        <td class="py-3 font-medium text-gray-700">${dataFormatada}</td>
-                        <td class="py-3">
-                            <div class="font-bold text-gray-900 text-sm">${brinde.familia || ''}</div>
-                            <div class="text-xs text-gray-400 font-mono">NF: ${brinde.codigo || ''}</div>
-                        </td>
-                        <td class="py-3 text-gray-600 max-w-xs truncate" title="${brinde.descricao || ''}">
-                            ${brinde.descricao || ''}
-                        </td>
-                        <td class="py-3">
-                            <span class="inline-block px-2.5 py-1 text-xs rounded-full border ${statusInfo.badgeClass}">
-                                ${statusInfo.texto}
-                            </span>
-                        </td>
-                        <td class="py-3 text-right space-x-1">
-                            <button type="button" onclick="alternarConcluido('${brinde.id}', ${!brinde.concluido})" class="text-xs px-2.5 py-1.5 rounded-md font-medium transition ${brinde.concluido ? 'bg-gray-100 text-gray-700 hover:bg-gray-200' : 'bg-blue-50 text-blue-700 hover:bg-blue-100'}" title="Marcar como Concluída/Recebida">
-                                ${brinde.concluido ? '↩️ Reabrir' : '✔️ Concluir'}
-                            </button>
-                            <button type="button" onclick="abrirModalAgendamento('${brinde.id}')" class="text-gray-600 hover:text-blue-800 font-medium text-xs bg-gray-50 hover:bg-gray-100 p-1.5 rounded-md transition" title="Editar Registo">
-                                ✏️
-                            </button>
-                            <button type="button" onclick="deletarBrinde('${brinde.id}')" class="text-red-600 hover:text-red-800 font-medium text-xs bg-red-50 hover:bg-red-100 p-1.5 rounded-md transition" title="Excluir">
-                                🗑️
-                            </button>
-                        </td>
-                    `;
-                    listaElement.appendChild(tr);
-                });
-            } catch (error) {
-                console.error("Erro ao carregar os dados:", error);
-                listaElement.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-xs text-red-600">Falha ao consultar a nuvem: ' + String(error?.message || error).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])) + '</td></tr>';
-            }
-        }
-
-        // Alternar status de concluído/recebido
-        window.alternarConcluido = async function(id, status) {
-            try {
-                await atualizarAgendamento(id, { concluido: status });
-                carregarBrindes();
-            } catch (error) {
-                console.error("Erro ao atualizar status:", error);
-                alert("Erro ao alterar o status da carga.");
-            }
-        };
-
-        // Funções globais de modal para edição completa
-        window.abrirModalAgendamento = async function(id) {
-            const brinde = (await consultarAgendamentos()).find(b => String(b.id) === String(id));
-            if (brinde) {
-                document.getElementById("editBrindeId").value = brinde.id;
-                document.getElementById("editCodigo").value = brinde.codigo || "";
-                document.getElementById("editFamilia").value = brinde.familia || "";
-                document.getElementById("editDescricao").value = brinde.descricao || "";
-                document.getElementById("editAgendamento").value = brinde.agendamento || "";
-                document.getElementById("modalAgendamento").classList.remove("hidden");
-            }
-        };
-
-        window.fecharModalAgendamento = function() {
-            document.getElementById("modalAgendamento").classList.add("hidden");
-        };
-
-        window.salvarEdicaoRegisto = async function(e) {
-            if (e) e.preventDefault();
-
-            const id = document.getElementById("editBrindeId").value;
-            const codigo = document.getElementById("editCodigo").value.trim();
-            const familia = document.getElementById("editFamilia").value.trim();
-            const descricao = document.getElementById("editDescricao").value.trim();
-            const agendamento = document.getElementById("editAgendamento").value;
-
-            if (!id) {
-                alert("Erro ao identificar o registo.");
-                return;
-            }
-
-            try {
-                await atualizarAgendamento(id, { codigo, familia, descricao, agendamento });
-                fecharModalAgendamento();
-                carregarBrindes();
-            } catch (error) {
-                console.error("Erro ao atualizar o registo:", error);
-                alert("Ocorreu um erro ao guardar as alterações.");
-            }
-        };
-
-        window.deletarBrinde = async function(id) {
-            if (confirm("Tem certeza que deseja remover este registo?")) {
-                const { error } = await supabase.from("agendamentos_cargas").delete().eq("id", id);
-                if (error) throw error;
-                carregarBrindes();
-            }
-        };
-
-        window.exportarCSV = async function() {
-            const brindes = await consultarAgendamentos();
-            if (brindes.length === 0) {
-                alert("Nenhum dado para exportar.");
-                return;
-            }
-
-            let csvContent = "\uFEFFAgendamento,NF,Fornecedor,Descricao,Status\n";
-
-            brindes.forEach(b => {
-                const agendamento = `"${b.agendamento || ''}"`;
-                const codigo = `"${(b.codigo || '').replace(/"/g, '""')}"`;
-                const fornecedor = `"${(b.familia || '').replace(/"/g, '""')}"`;
-                const descricao = `"${(b.descricao || '').replace(/"/g, '""')}"`;
-                const status = b.concluido ? "Concluido" : "Pendente";
-
-                csvContent += `${agendamento},${codigo},${fornecedor},${descricao},${status}\n`;
-            });
-
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.setAttribute("href", url);
-            link.setAttribute("download", "notas_fiscais_adimax.csv");
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        };
-
-        window.importarCSV = function(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = async function(e) {
-                const conteudo = e.target.result;
-                const linhas = conteudo.split(/\r\n|\n/);
-                if (linhas.length <= 1) {
-                    alert("O arquivo CSV está vazio.");
-                    return;
-                }
-
-                let inseridos = 0;
-
-                for (let i = 1; i < linhas.length; i++) {
-                    const linha = linhas[i].trim();
-                    if (!linha) continue;
-
-                    const colunas = linha.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || linha.split(",");
-                    const colunasLimpas = colunas.map(col => col.replace(/^"|"$/g, '').trim());
-
-                    if (colunasLimpas.length >= 4) {
-                        await inserirAgendamento({
-                            agendamento: colunasLimpas[0] || "",
-                            codigo: colunasLimpas[1] || "",
-                            familia: colunasLimpas[2] || "",
-                            descricao: colunasLimpas[3] || "",
-                            concluido: colunasLimpas[4] === "Concluido"
-                        });
-                        inseridos++;
-                    }
-                }
-
-                alert(`${inseridos} registro(s) importado(s) para a nuvem com sucesso!`);
-                carregarBrindes();
-                document.getElementById("importarCsv").value = "";
-            };
-
-            reader.readAsText(file, 'UTF-8');
-        };
-
-        // Importação explícita de registros que ainda estejam no IndexedDB deste navegador.
-        window.importarDadosLocais = async function() {
-            if (!usuarioAtual) { alert("O sistema ainda está iniciando. Atualize a página e tente novamente."); return; }
-            if (!db) { alert("A importação de dados antigos não carregou. Isso não afeta o login nem os dados na nuvem."); return; }
-            try {
-                const locais = await db.brindes.toArray();
-                if (!locais.length) {
-                    alert("Não encontramos registros antigos salvos neste navegador.");
-                    return;
-                }
-                const ok = confirm(`Encontramos ${locais.length} registro(s) local(is). Importar para a base compartilhada na nuvem? Os registros locais serão mantidos e não serão apagados.`);
-                if (!ok) return;
-                let importados = 0;
-                for (const b of locais) {
-                    await inserirAgendamento({
-                        codigo: b.codigo || "",
-                        familia: b.familia || "",
-                        descricao: b.descricao || "",
-                        agendamento: b.agendamento || "",
-                        concluido: !!b.concluido
-                    });
-                    importados++;
-                }
-                alert(`${importados} registro(s) copiado(s) para a nuvem. Os dados locais continuam guardados neste navegador.`);
-                await carregarBrindes();
-            } catch (error) {
-                alert("Erro ao importar dados locais: " + (error.message || error));
-            }
-        };
-    </script>
-
-</body>
-</html>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache">
+<title>ADIMAX • Agendamentos</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#f4f6fb;--card:#fff;--ink:#172033;--muted:#697386;--line:#e7eaf1;--p:#4f46e5;--green:#0f9f6e;--red:#dc2626;--shadow:0 12px 32px #1b274f12}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial}
+header{background:#111a32;color:white;padding:22px max(18px,calc((100% - 1180px)/2));display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}.brand{display:flex;align-items:center;gap:12px}.logo{width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,#818cf8,#4f46e5);display:grid;place-items:center;font-weight:900;font-size:20px}.brand h1{margin:0;font-size:21px}.brand p{margin:3px 0 0;color:#c6cde0;font-size:13px}#connection{font-size:12px;color:#c7f9df}
+main{max-width:1180px;margin:25px auto;padding:0 18px 40px}.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin-bottom:18px}.stat,.panel{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}.stat{padding:17px 20px}.label{color:var(--muted);font-size:13px}.num{font-size:28px;font-weight:850;margin-top:4px}.layout{display:grid;grid-template-columns:350px minmax(0,1fr);gap:18px;align-items:start}.panel{padding:21px}.panelhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:15px}.panel h2{font-size:17px;margin:0}.hint{color:var(--muted);font-size:12px;margin-top:4px}
+label{display:block;font-size:13px;font-weight:650;margin:12px 0 6px}input,textarea,select{width:100%;border:1px solid #dce1eb;border-radius:10px;padding:11px 12px;background:white;color:var(--ink);font:inherit;outline:none}input:focus,textarea:focus,select:focus{border-color:#818cf8;box-shadow:0 0 0 3px #eef2ff}textarea{resize:vertical;min-height:70px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}button,.filebtn{border:0;border-radius:10px;padding:10px 13px;font:inherit;font-size:13px;font-weight:750;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px}.primary{background:var(--p);color:white}.secondary{background:#eef0ff;color:#3932a8}.ghost{background:#f3f5f9;color:#3b4559}.danger{background:#fff0f0;color:#b91c1c}.small{padding:7px 10px;font-size:12px}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:13px}.toolbar input{flex:1;min-width:160px}.toolbar select{width:auto;min-width:130px}.list{display:flex;flex-direction:column;gap:10px}.appointment{border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;grid-template-columns:70px minmax(0,1fr) auto;gap:12px;align-items:start}.datebox{border-radius:11px;background:#f0f2ff;text-align:center;padding:9px 4px;color:#4338ca}.day{font-size:24px;line-height:1.1;font-weight:850}.month{font-size:11px;text-transform:uppercase;font-weight:800;margin-top:4px}.itemtitle{font-weight:800;overflow-wrap:anywhere}.meta{font-size:12px;color:var(--muted);margin-top:5px;display:flex;gap:8px;flex-wrap:wrap}.desc{font-size:13px;color:#4b5567;margin-top:7px;white-space:pre-wrap;overflow-wrap:anywhere}.pill{display:inline-flex;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:800;margin-top:8px}.scheduled{background:#e8f1ff;color:#2457a6}.done{background:#e4f8ef;color:#08764e}.cancelled{background:#fff0f0;color:#b91c1c}.itemactions{display:flex;gap:5px;flex-wrap:wrap}.empty{text-align:center;padding:38px 15px;color:var(--muted)}.empty strong{display:block;color:#344054;margin:8px}.footerline{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:15px;color:var(--muted);font-size:12px}.notice{font-size:12px;color:var(--muted);margin-top:13px;padding:11px;background:#f7f8fc;border-radius:10px}.toast{position:fixed;bottom:18px;right:18px;max-width:calc(100% - 36px);background:#172033;color:white;padding:12px 16px;border-radius:12px;box-shadow:var(--shadow);z-index:10;display:none}.toast.show{display:block}.hidden{display:none!important}
+@media(max-width:850px){.layout{grid-template-columns:1fr}.stat{padding:13px}.num{font-size:24px}}@media(max-width:560px){header{padding:17px}.today{display:none}main{padding:0 11px 28px;margin-top:14px}.stats{gap:7px}.stat{padding:11px 9px}.stat .label{font-size:11px}.num{font-size:21px}.panel{padding:15px}.appointment{grid-template-columns:56px minmax(0,1fr);gap:9px}.day{font-size:21px}.itemactions{grid-column:2}.toolbar select{flex:1}.grid2{gap:8px}}
+</style></head>
+<body>
+<header><div class="brand"><div class="logo">A</div><div><h1>ADIMAX</h1><p>Agendamento de recebimentos e cargas</p></div></div><div><div id="connection">Conectando ao banco...</div><div id="todayLabel" class="today" style="font-size:12px;color:#d9def0;margin-top:4px"></div></div></header>
+<main>
+<section class="stats"><div class="stat"><div class="label">Agendamentos no total</div><div class="num" id="totalCount">0</div></div><div class="stat"><div class="label">Para hoje</div><div class="num" id="todayCount">0</div></div><div class="stat"><div class="label">Concluídos</div><div class="num" id="doneCount">0</div></div></section>
+<div class="layout"><section class="panel"><div class="panelhead"><div><h2 id="formTitle">Novo agendamento</h2><div class="hint">Preencha os dados abaixo</div></div><span>✦</span></div>
+<form id="appointmentForm"><input type="hidden" id="editId">
+<label for="nf">Nota fiscal (NF) *</label><input id="nf" required maxlength="80" placeholder="Ex.: NF 123456">
+<label for="supplier">Fornecedor *</label><input id="supplier" required maxlength="140" placeholder="Nome do fornecedor">
+<label for="description">Descrição da carga</label><textarea id="description" maxlength="1000" placeholder="Produtos, quantidade ou observações..."></textarea>
+<div class="grid2"><div><label for="date">Data *</label><input id="date" type="date" required></div><div><label for="time">Horário</label><input id="time" type="time"></div></div>
+<div class="grid2"><div><label for="status">Status</label><select id="status"><option>Agendado</option><option>Concluído</option><option>Cancelado</option></select></div><div><label for="responsible">Responsável</label><input id="responsible" maxlength="100" placeholder="Opcional"></div></div>
+<div class="actions"><button class="primary" id="saveBtn" type="submit">＋ Salvar agendamento</button><button class="ghost hidden" id="cancelEdit" type="button">Cancelar edição</button></div>
+<div class="notice" id="notice">Os dados serão salvos no Supabase e compartilhados entre dispositivos.</div></form></section>
+<section class="panel"><div class="panelhead"><div><h2>Agenda</h2><div class="hint">Consulte e gerencie os recebimentos</div></div></div>
+<div class="toolbar"><input id="search" placeholder="⌕ Buscar NF ou fornecedor..." aria-label="Buscar"><select id="statusFilter" aria-label="Filtrar por status"><option value="">Todos os status</option><option>Agendado</option><option>Concluído</option><option>Cancelado</option></select><select id="dateFilter" aria-label="Filtrar por data"><option value="all">Todas as datas</option><option value="upcoming">Hoje e futuros</option><option value="past">Anteriores</option></select></div>
+<div id="appointments" class="list"><div class="empty">Carregando agendamentos...</div></div>
+<div class="footerline"><span id="resultCount">0 registros</span><div class="actions" style="margin:0"><button class="secondary small" id="exportBtn" type="button">↧ Exportar JSON</button><label class="filebtn ghost small" style="margin:0">↥ Importar JSON<input id="importFile" type="file" accept=".json,application/json" class="hidden"></label></div></div>
+</section></div></main><div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+(() => {
+const $=id=>document.getElementById(id);
+const SUPABASE_URL='https://innziuzgtpfsiywqmies.supabase.co';
+const SUPABASE_KEY='sb_publishable_fJB7zijdznI9ob9l9jSGlQ_6oU_J-d1';
+const TABLE='agendamentos_cargas';
+const SHARED_USER_ID='00000000-0000-4000-8000-000000000001';
+let client=null,records=[];
+const now=new Date(),todayISO=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+$('date').value=todayISO;$('todayLabel').textContent=now.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(s){const el=$('toast');el.textContent=s;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),3000)}
+function mapRow(r){return{id:r.id,nf:r.codigo||'',supplier:r.fornecedor||'',description:r.descricao||'',date:r.agendamento||todayISO,time:r.horario||'',status:r.status||(r.concluido?'Concluído':'Agendado'),responsible:r.responsavel||'',createdAt:r.created_at,updatedAt:r.updated_at}}
+function toRow(x){return{id:x.id||crypto.randomUUID(),user_id:SHARED_USER_ID,codigo:x.nf,fornecedor:x.supplier,descricao:x.description||'',agendamento:x.date,horario:x.time||null,status:x.status||'Agendado',concluido:x.status==='Concluído',responsavel:x.responsible||'',updated_at:new Date().toISOString()}}
+async function loadRecords(){const {data,error}=await client.from(TABLE).select('*').eq('user_id',SHARED_USER_ID).order('agendamento',{ascending:true}).order('horario',{ascending:true});if(error)throw error;records=(data||[]).map(mapRow);render()}
+async function saveRecord(x){const {error}=await client.from(TABLE).upsert(toRow(x),{onConflict:'id'});if(error)throw error}
+async function deleteRecord(id){const {error}=await client.from(TABLE).delete().eq('id',id).eq('user_id',SHARED_USER_ID);if(error)throw error}
+function render(){ $('totalCount').textContent=records.length;$('todayCount').textContent=records.filter(x=>x.date===todayISO&&x.status!=='Cancelado').length;$('doneCount').textContent=records.filter(x=>x.status==='Concluído').length;
+const q=$('search').value.trim().toLocaleLowerCase('pt-BR'),sf=$('statusFilter').value,df=$('dateFilter').value;
+const arr=records.filter(x=>[x.nf,x.supplier,x.description,x.responsible].join(' ').toLocaleLowerCase('pt-BR').includes(q)&&(!sf||x.status===sf)&&(df==='all'||(df==='upcoming'?x.date>=todayISO:x.date<todayISO))).sort((a,b)=>(a.date+(a.time||'')).localeCompare(b.date+(b.time||'')));
+$('resultCount').textContent=`${arr.length} ${arr.length===1?'registro':'registros'}`;
+if(!arr.length){$('appointments').innerHTML='<div class="empty"><div style="font-size:30px">▦</div><strong>Nenhum agendamento encontrado</strong><span>Cadastre um agendamento ou ajuste os filtros.</span></div>';return}
+$('appointments').innerHTML=arr.map(x=>{const [y,m,d]=x.date.split('-'),date=new Date(+y,+m-1,+d),month=date.toLocaleDateString('pt-BR',{month:'short'}).replace('.',''),cls=x.status==='Concluído'?'done':x.status==='Cancelado'?'cancelled':'scheduled';return `<article class="appointment"><div class="datebox"><div class="day">${d}</div><div class="month">${esc(month)}</div></div><div><div class="itemtitle">${esc(x.supplier)}</div><div class="meta"><span>NF: <b>${esc(x.nf)}</b></span><span>◷ ${esc(x.time||'Horário não definido')}</span></div>${x.description?`<div class="desc">${esc(x.description)}</div>`:''}${x.responsible?`<div class="meta">Responsável: ${esc(x.responsible)}</div>`:''}<span class="pill ${cls}">${esc(x.status)}</span></div><div class="itemactions"><button class="secondary small" data-edit="${esc(x.id)}">Editar</button><button class="danger small" data-delete="${esc(x.id)}">Excluir</button></div></article>`}).join('')}
+function resetForm(){ $('appointmentForm').reset();$('editId').value='';$('date').value=todayISO;$('status').value='Agendado';$('formTitle').textContent='Novo agendamento';$('saveBtn').textContent='＋ Salvar agendamento';$('cancelEdit').classList.add('hidden')}
+$('appointmentForm').addEventListener('submit',async e=>{e.preventDefault();const id=$('editId').value||crypto.randomUUID(),existing=records.find(x=>x.id===id);const x={id,nf:$('nf').value.trim(),supplier:$('supplier').value.trim(),description:$('description').value.trim(),date:$('date').value,time:$('time').value,status:$('status').value,responsible:$('responsible').value.trim(),createdAt:existing?.createdAt};if(!x.nf||!x.supplier||!x.date){toast('Preencha NF, fornecedor e data.');return}
+$('saveBtn').disabled=true;$('saveBtn').textContent='Salvando...';try{await saveRecord(x);await loadRecords();resetForm();toast(existing?'Agendamento atualizado no Supabase!':'Agendamento salvo no Supabase!')}catch(err){console.error(err);toast('Erro ao salvar: '+(err.message||'verifique a conexão/permissões.'))}finally{$('saveBtn').disabled=false;$('saveBtn').textContent='＋ Salvar agendamento'}});
+$('cancelEdit').addEventListener('click',resetForm);
+$('appointments').addEventListener('click',async e=>{const eb=e.target.closest('[data-edit]'),db=e.target.closest('[data-delete]');if(eb){const x=records.find(r=>r.id===eb.dataset.edit);if(!x)return;$('editId').value=x.id;$('nf').value=x.nf;$('supplier').value=x.supplier;$('description').value=x.description;$('date').value=x.date;$('time').value=x.time;$('status').value=x.status;$('responsible').value=x.responsible;$('formTitle').textContent='Editar agendamento';$('saveBtn').textContent='Salvar alterações';$('cancelEdit').classList.remove('hidden');window.scrollTo({top:0,behavior:'smooth'})}if(db){const x=records.find(r=>r.id===db.dataset.delete);if(x&&confirm(`Excluir a NF ${x.nf} — ${x.supplier}?`)){try{await deleteRecord(x.id);await loadRecords();toast('Agendamento excluído do Supabase.')}catch(err){toast('Erro ao excluir: '+err.message)}}}});
+['search','statusFilter','dateFilter'].forEach(id=>$(id).addEventListener(id==='search'?'input':'change',render));
+$('exportBtn').addEventListener('click',()=>{const blob=new Blob([JSON.stringify({app:'ADIMAX Agendamentos',version:1,exportedAt:new Date().toISOString(),records},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`adimax-agendamentos-${todayISO}.json`;a.click();URL.revokeObjectURL(url);toast('Backup exportado.')});
+$('importFile').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{const data=JSON.parse(await file.text()),arr=Array.isArray(data)?data:data.records;if(!Array.isArray(arr))throw Error('Formato inválido');if(!confirm(`Importar ${arr.length} registro(s)? IDs iguais serão atualizados.`))return;for(const raw of arr){if(!raw||!raw.nf||!raw.supplier||!raw.date)continue;await saveRecord({...raw,id:raw.id||crypto.randomUUID()})}await loadRecords();toast('Importação concluída no Supabase.')}catch(err){toast('Falha na importação: '+err.message)}finally{e.target.value=''}});
+(async()=>{try{if(!window.supabase?.createClient)throw Error('A biblioteca Supabase não carregou. Verifique sua conexão.');client=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);await loadRecords();$('connection').textContent='● Conectado ao Supabase';$('connection').style.color='#86efac';$('notice').textContent='Conectado ao Supabase. Os registros são compartilhados entre dispositivos que usam este sistema. Exporte um backup periodicamente.'}catch(err){console.error(err);$('connection').textContent='● Falha na conexão';$('connection').style.color='#fca5a5';$('appointments').innerHTML=`<div class="empty"><strong>Não foi possível conectar ao Supabase</strong><span>${esc(err.message||'Verifique a internet e as permissões do projeto.')}</span></div>`;toast('Falha na conexão com o Supabase.')}})();
+})();
+</script></body></html>
