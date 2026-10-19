@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Cache-Control" content="no-cache">
+<link rel="icon" type="image/svg+xml" href="./logo-agendamento.svg">
+<meta name="theme-color" content="#142544">
 <title>AGENDAMENTO PROMOCIONAIS</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -147,6 +149,12 @@ header{background:#111;color:#fff;border-bottom:4px solid #f28c00}
 @media(max-width:560px){.brand h1{max-width:230px;line-height:1.2}.splash-content h2{font-size:clamp(30px,8vw,46px)}}
 
 
+/* Logotipo oficial do aplicativo */
+.logo{padding:0;overflow:hidden;background:transparent!important}
+.logo img{width:100%;height:100%;display:block;object-fit:cover}
+.splash-logo{padding:0;overflow:hidden}
+.splash-logo img{width:100%;height:100%;display:block;object-fit:cover}
+
 /* Paleta final: branco, azul-marinho e azul — estilo moderno */
 :root{
  --bg:#f3f6fc;--card:#ffffff;--ink:#17233b;--muted:#64748b;--line:#dfe7f2;
@@ -197,7 +205,7 @@ input:focus,textarea:focus,select:focus{border-color:#3b82f6;box-shadow:0 0 0 3p
 <div id="splashScreen" role="button" tabindex="0" aria-label="Clique para entrar no sistema ADIMAX">
   <div class="splash-orb one"></div><div class="splash-orb two"></div>
   <div class="splash-content">
-    <div class="splash-logo" aria-label="Logotipo Agendamento Promocionais">🙏</div>
+    <div class="splash-logo" aria-label="Logotipo Agendamento Promocionais"><img src="./logo-agendamento.svg" alt="Logo Agendamento Promocionais"></div>
     <div class="splash-eyebrow">GESTÃO DE AGENDAMENTOS</div>
     <h2>AGENDAMENTO<br><span>PROMOCIONAIS</span></h2>
     <p class="splash-subtitle">Agendamento de recebimentos e cargas.<br>Organização, cuidado e praticidade em um só lugar.</p>
@@ -206,7 +214,7 @@ input:focus,textarea:focus,select:focus{border-color:#3b82f6;box-shadow:0 0 0 3p
   </div>
 </div>
 
-<header><div class="brand"><div class="logo">AP</div><div><h1>AGENDAMENTO PROMOCIONAIS</h1><p>Gestão de agendamentos e recebimentos</p></div></div><div><div id="connection">Conectando ao banco...</div><div id="todayLabel" class="today" style="font-size:12px;color:#d9def0;margin-top:4px"></div></div></header>
+<header><div class="brand"><div class="logo"><img src="./logo-agendamento.svg" alt="Logo Agendamento Promocionais"></div><div><h1>AGENDAMENTO PROMOCIONAIS</h1><p>Gestão de agendamentos e recebimentos</p></div></div><div><div id="connection">Conectando ao banco...</div><div id="todayLabel" class="today" style="font-size:12px;color:#d9def0;margin-top:4px"></div></div></header>
 <main>
 <section class="stats"><div class="stat"><div class="label">Agendamentos no total</div><div class="num" id="totalCount">0</div></div><div class="stat"><div class="label">Para hoje</div><div class="num" id="todayCount">0</div></div><div class="stat"><div class="label">Concluídos</div><div class="num" id="doneCount">0</div></div></section>
 <div class="layout"><section class="panel"><div class="panelhead"><div><h2 id="formTitle">Novo agendamento</h2><div class="hint">Preencha os dados abaixo</div></div><span>✦</span></div>
