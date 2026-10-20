@@ -12,6 +12,18 @@
     suppliers: document.getElementById('suppliersViewBtn')
   };
 
+  const nav = sidebar.querySelector('.sidebar-nav');
+  if (nav && !nav.querySelector('[data-action="desempenho"]')) {
+    const desempenho = document.createElement('button');
+    desempenho.type = 'button';
+    desempenho.className = 'side-link';
+    desempenho.dataset.action = 'desempenho';
+    desempenho.title = 'Desempenho';
+    desempenho.innerHTML = '<span class="side-icon">▥</span><span class="side-label">Desempenho</span>';
+    const separator = nav.querySelector('.side-separator');
+    nav.insertBefore(desempenho, separator || null);
+  }
+
   function markActive(view) {
     document.querySelectorAll('.side-link[data-view]').forEach(btn => btn.classList.toggle('active', btn.dataset.view === view));
   }
@@ -29,6 +41,10 @@
   viewButtons.overview?.addEventListener('click', () => markActive('overview'));
   viewButtons.suppliers?.addEventListener('click', () => markActive('suppliers'));
 
+  document.querySelector('[data-action="desempenho"]')?.addEventListener('click', () => {
+    window.location.href = 'https://jkkjkjjkkj94-bit.github.io/desempenho/';
+  });
+
   document.querySelector('[data-action="new"]')?.addEventListener('click', () => {
     viewButtons.agenda?.click(); markActive('agenda');
     document.getElementById('appointmentForm')?.scrollIntoView({ behavior:'smooth', block:'start' });
@@ -41,9 +57,4 @@
   });
 
   document.querySelector('[data-action="export"]')?.addEventListener('click', () => document.getElementById('exportBtn')?.click());
-
-  function loadScript(src, done) {
-    const s=document.createElement('script'); s.src=src; s.onload=()=>done?.(); document.body.appendChild(s);
-  }
-  loadScript('./gestao-dados.js', () => loadScript('./recursos-gestao.js'));
 })();
